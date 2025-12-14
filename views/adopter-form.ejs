@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= adopter ? "Edit Adopter" : "Add Adopter" %> - Pet Shelter Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container mt-4">
+        <h1><%= adopter ? "Edit Adopter" : "Add New Adopter" %></h1>
+
+        <form action="<%= adopter ? '/adopters/edit/' + adopter._id : '/adopters/add' %>" method="POST">
+            <div class="mb-3">
+                <label for="adopter_id" class="form-label">Adopter ID</label>
+                <input type="text" name="adopter_id" id="adopter_id" class="form-control" required pattern="^A\d{3}$" value="<%= adopter ? adopter.adopter_id : '' %>">
+            </div>
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" name="name" id="name" class="form-control" required value="<%= adopter ? adopter.name : '' %>">
+            </div>
+            <div class="mb-3">
+                <label for="contact" class="form-label">Contact</label>
+                <input type="text" name="contact" id="contact" class="form-control" value="<%= adopter ? adopter.contact : '' %>">
+            </div>
+            <div class="mb-3">
+                <label for="adopted_pet_count" class="form-label">Number of Adopted Pets</label>
+                <input type="number" name="adopted_pet_count" id="adopted_pet_count" class="form-control" value="<%= adopter ? adopter.adopted_pet_count : 0 %>">
+            </div>
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea name="notes" id="notes" class="form-control"><%= adopter ? adopter.notes : '' %></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><%= adopter ? "Update Adopter" : "Add Adopter" %></button>
+            <a href="/adopters" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
