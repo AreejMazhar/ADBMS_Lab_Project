@@ -13,39 +13,47 @@
         <h1><%= adoption ? "Edit Adoption Record" : "Add New Adoption" %></h1>
 
         <form action="<%= adoption ? '/adoptions/edit/' + adoption._id : '/adoptions/add' %>" method="POST">
+            <!-- Record ID -->
             <div class="mb-3">
                 <label for="record_id" class="form-label">Record ID</label>
-                <input type="text" name="record_id" id="record_id" class="form-control" required pattern="^R\d{3}$" value="<%= adoption ? adoption.record_id : '' %>">
+                <input type="text" name="record_id" id="record_id" class="form-control" required
+                    value="<%= adoption ? adoption.record_id : nextId %>" <%= adoption ? "readonly" : "" %>>
             </div>
 
+            <!-- Pet Selection -->
             <div class="mb-3">
                 <label for="pet_id" class="form-label">Pet</label>
                 <select name="pet_id" id="pet_id" class="form-select" required>
                     <% pets.forEach(pet => { %>
-                        <option value="<%= pet._id %>" <%= adoption && adoption.pet_id == pet._id ? "selected" : "" %>><%= pet.name %></option>
+                        <option value="<%= pet.pet_id %>" <%= adoption && adoption.pet_id === pet.pet_id ? "selected" : "" %>><%= pet.name %></option>
                     <% }) %>
                 </select>
             </div>
 
+            <!-- Adopter Selection -->
             <div class="mb-3">
                 <label for="adopter_id" class="form-label">Adopter</label>
                 <select name="adopter_id" id="adopter_id" class="form-select" required>
                     <% adopters.forEach(adopter => { %>
-                        <option value="<%= adopter._id %>" <%= adoption && adoption.adopter_id == adopter._id ? "selected" : "" %>><%= adopter.name %></option>
+                        <option value="<%= adopter.adopter_id %>" <%= adoption && adoption.adopter_id === adopter.adopter_id ? "selected" : "" %>><%= adopter.name %></option>
                     <% }) %>
                 </select>
             </div>
 
+            <!-- Adoption Date -->
             <div class="mb-3">
                 <label for="adoption_date" class="form-label">Adoption Date</label>
-                <input type="date" name="adoption_date" id="adoption_date" class="form-control" required value="<%= adoption ? adoption.adoption_date.toISOString().split('T')[0] : '' %>">
+                <input type="date" name="adoption_date" id="adoption_date" class="form-control" required
+                    value="<%= adoption ? adoption.adoption_date.toISOString().split('T')[0] : '' %>">
             </div>
 
+            <!-- Optional Comments -->
             <div class="mb-3">
-                <label for="comments" class="form-label">Comments</label>
+                <label for="comments" class="form-label">Comments (Optional)</label>
                 <textarea name="comments" id="comments" class="form-control"><%= adoption ? adoption.comments : '' %></textarea>
             </div>
 
+            <!-- Buttons -->
             <button type="submit" class="btn btn-primary"><%= adoption ? "Update Record" : "Add Record" %></button>
             <a href="/adoptions" class="btn btn-secondary">Cancel</a>
         </form>

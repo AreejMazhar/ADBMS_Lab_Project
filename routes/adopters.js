@@ -2,6 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Adopter = require('../models/Adopter');
 
+// Helper: generate next Adopter ID (A001, A002...)
+async function getNextAdopterId() {
+    const lastAdopter = await Adopter.findOne().sort({ adopter_id: -1 });
+    if (!lastAdopter) return "A001";
+    const num = parseInt(lastAdopter.adopter_id.slice(1)) + 1;
+    return `A${num.toString().padStart(3, "0")}`;
+}
+
 // List all adopters
 router.get('/', async (req, res) => {
     const adopters = await Adopter.find();
@@ -9,43 +17,39 @@ router.get('/', async (req, res) => {
 });
 
 // Show Add Adopter Form
-router.get('/add', (req, res) => {
-    res.render('adopter-form', { adopter: null });
+router.get('/add', async (req, res) => {
+    const nextId = await getNextAdopterId();
+    res.render('adopter-form', { adopter: null, nextId });
 });
 
 // Handle Add Adopter POST
 router.post('/add', async (req, res) => {
     const { adopter_id, name, contact, adopted_pet_count, notes } = req.body;
-
     await Adopter.create({
         adopter_id,
         name,
-        contact: contact || "",
+        contact,
         adopted_pet_count: adopted_pet_count || 0,
         notes: notes || ""
     });
-
     res.redirect('/adopters');
 });
 
 // Show Edit Adopter Form
 router.get('/edit/:id', async (req, res) => {
     const adopter = await Adopter.findById(req.params.id);
-    res.render('adopter-form', { adopter });
+    res.render('adopter-form', { adopter, nextId: null });
 });
 
 // Handle Edit Adopter POST
 router.post('/edit/:id', async (req, res) => {
-    const { adopter_id, name, contact, adopted_pet_count, notes } = req.body;
-
+    const { name, contact, adopted_pet_count, notes } = req.body;
     await Adopter.findByIdAndUpdate(req.params.id, {
-        adopter_id,
         name,
-        contact: contact || "",
-        adopted_pet_count: adopted_pet_count || 0,
+        contact,
+        adopted_pet_count,
         notes: notes || ""
     });
-
     res.redirect('/adopters');
 });
 

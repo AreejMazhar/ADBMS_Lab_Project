@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
     <%- include('partials/header') %>
 
     <div class="container mt-4">
@@ -15,39 +16,56 @@
         <form action="<%= pet ? '/pets/edit/' + pet._id : '/pets/add' %>" method="POST">
             <div class="mb-3">
                 <label for="pet_id" class="form-label">Pet ID</label>
-                <input type="text" name="pet_id" id="pet_id" class="form-control" required pattern="^P\d{3}$" value="<%= pet ? pet.pet_id : '' %>">
+                <input type="text" name="pet_id" id="pet_id" class="form-control" required
+                    value="<%= pet ? pet.pet_id : nextId %>" <%= pet ? "readonly" : "" %>>
             </div>
+
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
-                <input type="text" name="name" id="name" class="form-control" required value="<%= pet ? pet.name : '' %>">
+                <input type="text" name="name" id="name" class="form-control" required
+                    value="<%= pet ? pet.name : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="species" class="form-label">Species</label>
-                <input type="text" name="species" id="species" class="form-control" value="<%= pet ? pet.species : '' %>">
+                <input type="text" name="species" id="species" class="form-control"
+                    value="<%= pet ? pet.species : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="breed" class="form-label">Breed</label>
-                <input type="text" name="breed" id="breed" class="form-control" value="<%= pet ? pet.breed : '' %>">
+                <input type="text" name="breed" id="breed" class="form-control"
+                    value="<%= pet ? pet.breed : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="age" class="form-label">Age</label>
-                <input type="number" name="age" id="age" class="form-control" value="<%= pet ? pet.age : '' %>">
+                <input type="number" name="age" id="age" class="form-control"
+                    value="<%= pet ? pet.age : '' %>">
             </div>
+
             <div class="mb-3 form-check">
-                <input type="checkbox" name="available" id="available" class="form-check-input" <%= pet && pet.available ? "checked" : "" %>>
+                <input type="checkbox" name="available" id="available" class="form-check-input"
+                    <%= pet && pet.available ? "checked" : "" %>>
                 <label for="available" class="form-check-label">Available for Adoption</label>
             </div>
+
+            <!-- Optional fields -->
             <div class="mb-3">
                 <label for="vaccinations" class="form-label">Vaccinations (comma-separated)</label>
-                <input type="text" name="vaccinations" id="vaccinations" class="form-control" value="<%= pet ? pet.vaccinations.join(', ') : '' %>">
+                <input type="text" name="vaccinations" id="vaccinations" class="form-control"
+                    value="<%= pet ? (pet.vaccinations ? pet.vaccinations.join(', ') : '') : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="medical_notes" class="form-label">Medical Notes</label>
                 <textarea name="medical_notes" id="medical_notes" class="form-control"><%= pet ? pet.medical_notes : '' %></textarea>
             </div>
+
             <div class="mb-3">
-                <label for="microchip" class="form-label">Microchip Number</label>
-                <input type="text" name="microchip" id="microchip" class="form-control" value="<%= pet ? pet.microchip : '' %>">
+                <label for="microchip" class="form-label">Microchip</label>
+                <input type="text" name="microchip" id="microchip" class="form-control"
+                    value="<%= pet ? pet.microchip : '' %>">
             </div>
 
             <button type="submit" class="btn btn-primary"><%= pet ? "Update Pet" : "Add Pet" %></button>

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
     <%- include('partials/header') %>
 
     <div class="container mt-4">
@@ -15,20 +16,29 @@
         <form action="<%= adopter ? '/adopters/edit/' + adopter._id : '/adopters/add' %>" method="POST">
             <div class="mb-3">
                 <label for="adopter_id" class="form-label">Adopter ID</label>
-                <input type="text" name="adopter_id" id="adopter_id" class="form-control" required pattern="^A\d{3}$" value="<%= adopter ? adopter.adopter_id : '' %>">
+                <input type="text" name="adopter_id" id="adopter_id" class="form-control" required
+                    value="<%= adopter ? adopter.adopter_id : nextId %>" <%= adopter ? "readonly" : "" %>>
             </div>
+
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
-                <input type="text" name="name" id="name" class="form-control" required value="<%= adopter ? adopter.name : '' %>">
+                <input type="text" name="name" id="name" class="form-control" required
+                    value="<%= adopter ? adopter.name : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="contact" class="form-label">Contact</label>
-                <input type="text" name="contact" id="contact" class="form-control" value="<%= adopter ? adopter.contact : '' %>">
+                <input type="text" name="contact" id="contact" class="form-control"
+                    value="<%= adopter ? adopter.contact : '' %>">
             </div>
+
             <div class="mb-3">
                 <label for="adopted_pet_count" class="form-label">Number of Adopted Pets</label>
-                <input type="number" name="adopted_pet_count" id="adopted_pet_count" class="form-control" value="<%= adopter ? adopter.adopted_pet_count : 0 %>">
+                <input type="number" name="adopted_pet_count" id="adopted_pet_count" class="form-control"
+                    value="<%= adopter ? adopter.adopted_pet_count : 0 %>">
             </div>
+
+            <!-- Optional Notes -->
             <div class="mb-3">
                 <label for="notes" class="form-label">Notes</label>
                 <textarea name="notes" id="notes" class="form-control"><%= adopter ? adopter.notes : '' %></textarea>
