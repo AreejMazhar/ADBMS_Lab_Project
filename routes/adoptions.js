@@ -27,20 +27,41 @@ router.get('/', async (req, res) => {
             comments: record.comments || "-"
         };
     }));
-    res.render('adoptions', { adoptions: populated });
+    res.render('adoptions', {
+        adoptions: populated,
+        error: req.query.error || null
+    });
 });
 
 // Show Add Adoption Form
 router.get('/add', async (req, res) => {
     const pets = await Pet.find({ available: true }).lean();
-
-    // If no pets are available, show alert and redirect
-    if (pets.length === 0) {
-        return res.send('<script>alert("No pets are available for adoption!"); window.location.href="/adoptions";</script>');
-    }
-
     const adopters = await Adopter.find().lean();
     const nextId = await getNextRecordId();
+
+    // No available pets → render the adoption page with error modal
+    if (pets.length === 0) {
+        const adoptions = await Adoption.find();
+        const populated = await Promise.all(adoptions.map(async record => {
+            const pet = await Pet.findOne({ pet_id: record.pet_id });
+            const adopter = await Adopter.findOne({ adopter_id: record.adopter_id });
+            return {
+                _id: record._id,
+                record_id: record.record_id,
+                pet_name: pet ? pet.name : "-",
+                adopter_name: adopter ? adopter.name : "-",
+                adoption_date: record.adoption_date,
+                comments: record.comments || "-"
+            };
+        }));
+
+        return res.render('adoptions', {
+            adoptions: populated,
+            error: 'No available pets. Please add pets or mark one as available first.'
+        });
+    }
+
+    // Normal case → show add form
     res.render('adoption-form', { adoption: null, pets, adopters, nextId });
 });
 

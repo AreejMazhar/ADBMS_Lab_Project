@@ -13,7 +13,10 @@ async function getNextPetId() {
 // List all pets
 router.get('/', async (req, res) => {
     const pets = await Pet.find();
-    res.render('pets', { pets });
+    res.render('pets', {
+        pets,
+        error: req.query.error || null
+    });
 });
 
 // Show Add Pet Form
@@ -62,7 +65,19 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 // Delete Pet
+const Adoption = require('../models/AdoptionRecord');
+
 router.post('/delete/:id', async (req, res) => {
+    const pet = await Pet.findById(req.params.id);
+    if (!pet) return res.redirect('/pets');
+
+    // Check if pet is used in any adoption
+    const hasAdoptions = await Adoption.findOne({ pet_id: pet.pet_id });
+
+    if (hasAdoptions) {
+        return res.redirect(`/pets?error=${encodeURIComponent('Pet has adoption records and cannot be deleted')}`);
+    }
+
     await Pet.findByIdAndDelete(req.params.id);
     res.redirect('/pets');
 });

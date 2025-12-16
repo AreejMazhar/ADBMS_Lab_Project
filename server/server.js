@@ -32,7 +32,7 @@ app.use('/reports', reportRoutes);
 
 // Home Route
 app.get('/', (req, res) => {
-    res.render('index');
+    res.render('index', { page: 'home' });
 });
 
 // Start Server

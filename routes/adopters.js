@@ -13,7 +13,10 @@ async function getNextAdopterId() {
 // List all adopters
 router.get('/', async (req, res) => {
     const adopters = await Adopter.find();
-    res.render('adopters', { adopters });
+    res.render('adopters', {
+        adopters,
+        error: req.query.error || null
+    });
 });
 
 // Show Add Adopter Form
@@ -54,9 +57,22 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 // Delete Adopter
+const Adoption = require('../models/AdoptionRecord');
+
 router.post('/delete/:id', async (req, res) => {
+    const adopter = await Adopter.findById(req.params.id);
+    if (!adopter) return res.redirect('/adopters');
+
+    // Check if adopter has adoption records
+    const hasAdoptions = await Adoption.findOne({ adopter_id: adopter.adopter_id });
+
+    if (hasAdoptions) {
+        return res.redirect('/adopters?error=Adopter has adoption records and cannot be deleted');
+    }
+
     await Adopter.findByIdAndDelete(req.params.id);
     res.redirect('/adopters');
 });
+
 
 module.exports = router;
