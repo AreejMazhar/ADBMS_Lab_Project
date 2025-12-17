@@ -12,8 +12,6 @@ const petSchema = new mongoose.Schema({
     breed: String,
     age: Number,
     available: { type: Boolean, default: true },
-    vaccinations: [String],           // optional
-    medical_notes: { type: String },  // optional
     microchip: { type: String }       // optional
 });
 

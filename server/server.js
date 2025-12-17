@@ -23,12 +23,14 @@ const petRoutes = require('../routes/pets');
 const adopterRoutes = require('../routes/adopters');
 const adoptionRoutes = require('../routes/adoptions');
 const reportRoutes = require('../routes/reports');
+const medicalRecordRoutes = require('../routes/medicalrecords');
 
 // Use Routes
 app.use('/pets', petRoutes);
 app.use('/adopters', adopterRoutes);
 app.use('/adoptions', adoptionRoutes);
 app.use('/reports', reportRoutes);
+app.use('/medicalrecords', medicalRecordRoutes);
 
 // Home Route
 app.get('/', (req, res) => {

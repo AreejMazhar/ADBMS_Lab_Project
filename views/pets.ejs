@@ -69,7 +69,6 @@
                     <option value="no">Not Available</option>
                 </select>
 
-                <input type="text" id="filterVaccinations" class="form-control form-control-sm" placeholder="Vaccinations contains...">
                 <input type="text" id="filterBreed" class="form-control form-control-sm" placeholder="Breed contains...">
                 <input type="text" id="filterNotes" class="form-control form-control-sm" placeholder="Notes contains...">
                 
@@ -94,8 +93,7 @@
                         <th>Breed</th>
                         <th>Age</th>
                         <th>Available</th>
-                        <th>Vaccinations</th>
-                        <th>Medical Notes</th>
+                        <th>Medical Records</th>
                         <th>Microchip</th>
                         <th>Actions</th>
                     </tr>
@@ -109,8 +107,11 @@
                         <td><%= pet.breed || "-" %></td>
                         <td><%= pet.age != null ? pet.age : "-" %></td>
                         <td><%= pet.available ? "Yes" : "No" %></td>
-                        <td><%= pet.vaccinations.length > 0 ? pet.vaccinations.join(', ') : "-" %></td>
-                        <td><%= pet.medical_notes || "-" %></td>
+                        <td>
+                            <a href="/medicalrecords?pet_id=<%= pet.pet_id %>&pet_name=<%= encodeURIComponent(pet.name) %>" class="btn btn-sm btn-primary">
+                                View Records
+                            </a>
+                        </td>
                         <td><%= pet.microchip || "-" %></td>
                         <td>
                             <div class="d-flex gap-1">
@@ -166,8 +167,7 @@
             const filterBreed = document.getElementById('filterBreed');
             const filterNotes = document.getElementById('filterNotes');
             const rows = document.querySelectorAll('.table tbody tr');
-        const filterVaccinations = document.getElementById('filterVaccinations');
-
+        
         function applyFilters() {
             const searchQuery = globalSearch.value.toLowerCase();
             rows.forEach(row => {
@@ -176,7 +176,6 @@
                 const species = row.cells[2].textContent.toLowerCase();
                 const breed = row.cells[3].textContent.toLowerCase();
                 const available = row.cells[5].textContent.toLowerCase();
-                const vaccinations = row.cells[6].textContent.toLowerCase();
                 const notes = row.cells[7].textContent.toLowerCase();
 
                 let visible = true;
@@ -186,8 +185,7 @@
                     id.includes(searchQuery) ||
                     name.includes(searchQuery) ||
                     breed.includes(searchQuery) ||
-                    notes.includes(searchQuery) ||
-                    vaccinations.includes(searchQuery)
+                    notes.includes(searchQuery)
                 );
 
                 // Species filter
@@ -205,15 +203,12 @@
                 // Notes filter
                 if (filterNotes.value) visible = visible && notes.includes(filterNotes.value.toLowerCase());
 
-                // Vaccinations filter
-                if (filterVaccinations.value) visible = visible && vaccinations.includes(filterVaccinations.value.toLowerCase());
-
                 row.style.display = visible ? "" : "none";
             });
         }
 
         // Add event listener
-        [globalSearch, filterSpecies, filterAvailable, filterBreed, filterNotes, filterVaccinations].forEach(el => {
+        [globalSearch, filterSpecies, filterAvailable, filterBreed, filterNotes].forEach(el => {
             el.addEventListener('input', applyFilters);
             el.addEventListener('change', applyFilters);
         });
@@ -238,7 +233,6 @@
         document.getElementById('clearFiltersBtn').addEventListener('click', () => {
             globalSearch.value = '';
             filterSpecies.value = '';
-            filterVaccinations.value = '';
             filterAvailable.value = '';
             filterBreed.value = '';
             filterNotes.value = '';
@@ -247,33 +241,5 @@
         });
     });
     </script>
-
-    <script>
-    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-        const fields = [
-            'globalSearch',
-            'filterSpecies',
-            'filterVaccinations',
-            'filterAvailable',
-            'filterBreed',
-            'filterNotes'
-        ];
-
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-
-            if (el.tagName === 'SELECT') {
-                el.selectedIndex = 0;
-            } else {
-                el.value = '';
-            }
-        });
-
-        applyFilters();
-    });
-    </script>
-
-
 </body>
 </html>

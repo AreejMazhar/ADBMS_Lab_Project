@@ -58,11 +58,12 @@ body {
 
 .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 30px;
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
 }
+
 
 .feature-card {
   background: var(--white);

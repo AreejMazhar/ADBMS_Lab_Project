@@ -35,7 +35,7 @@ router.get('/add', async (req, res) => {
 
 // Handle Add Pet POST
 router.post('/add', async (req, res) => {
-    const { pet_id, name, species, breed, age, available, vaccinations, medical_notes, microchip } = req.body;
+    const { pet_id, name, species, breed, age, available, microchip } = req.body;
     await Pet.create({
         pet_id,
         name,
@@ -43,8 +43,6 @@ router.post('/add', async (req, res) => {
         breed,
         age,
         available: available === 'on',
-        vaccinations: vaccinations ? vaccinations.split(',').map(s => s.trim()) : [],
-        medical_notes: medical_notes || "",
         microchip: microchip || ""
     });
     res.redirect('/pets');
@@ -58,15 +56,13 @@ router.get('/edit/:id', async (req, res) => {
 
 // Handle Edit Pet POST
 router.post('/edit/:id', async (req, res) => {
-    const { name, species, breed, age, available, vaccinations, medical_notes, microchip } = req.body;
+    const { name, species, breed, age, available, microchip } = req.body;
     await Pet.findByIdAndUpdate(req.params.id, {
         name,
         species,
         breed,
         age,
         available: available === 'on',
-        vaccinations: vaccinations ? vaccinations.split(',').map(s => s.trim()) : [],
-        medical_notes: medical_notes || "",
         microchip: microchip || ""
     });
     res.redirect('/pets');
