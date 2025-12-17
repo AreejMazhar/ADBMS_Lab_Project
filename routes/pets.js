@@ -14,6 +14,7 @@ async function getNextPetId() {
 router.get('/', async (req, res) => {
     const pets = await Pet.find();
     res.render('pets', {
+        page: 'pets',
         pets,
         error: req.query.error || null
     });

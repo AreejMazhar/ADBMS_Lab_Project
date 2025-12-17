@@ -55,6 +55,7 @@ router.get('/', async (req, res) => {
         ]);
 
         res.render('reports', {
+            page: 'reports',
             totalPets,
             totalAdopters,
             totalAdoptions,

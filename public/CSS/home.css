@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+
+body {
+  background: var(--gray-bg);
+  font-family: 'Inter', sans-serif;
+}
+
+/* HERO */
+.hero {
+  padding: 15px 50px 20px 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+}
+
+.hero-text h1 {
+  font-size: 56px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.hero-text p {
+  font-size: 18px;
+  color: var(--text-light);
+  max-width: 600px;
+}
+
+.hero-image img {
+  width: 260px;
+  transition: transform 0.4s ease;
+}
+
+.hero-image img:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+/* FEATURES */
+.features-section {
+  padding: 10px 30px 40px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 35px 30px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-hover);
+}
+
+.blue-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--text-dark), var(--dark));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover .blue-indicator {
+  transform: scaleX(1);
+}
+
+.feature-icon {
+  font-size: 48px;
+  color: var(--green);
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.feature-card p {
+  color: var(--text-gray);
+  font-size: 16px;
+}
+
+/* BUTTON */
+.card-btn {
+  margin-top: 20px;
+  padding: 12px 26px;
+  border: 2px solid var(--text-dark);
+  border-radius: 25px;
+  background: transparent;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.card-btn:hover {
+  background: var(--text-dark);
+  color: var(--white);
+}

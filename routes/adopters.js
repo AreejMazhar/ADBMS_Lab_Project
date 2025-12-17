@@ -14,6 +14,7 @@ async function getNextAdopterId() {
 router.get('/', async (req, res) => {
     const adopters = await Adopter.find();
     res.render('adopters', {
+        page: 'adopters',
         adopters,
         error: req.query.error || null
     });

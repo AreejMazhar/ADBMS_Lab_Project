@@ -28,6 +28,7 @@ router.get('/', async (req, res) => {
         };
     }));
     res.render('adoptions', {
+        page: 'adoptions',
         adoptions: populated,
         error: req.query.error || null
     });
