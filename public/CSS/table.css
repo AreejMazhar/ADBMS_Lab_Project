@@ -1,0 +1,239 @@
+/* VARIABLES */
+:root {
+  --green: #00ED64;
+  --green-hover: #00C853;
+  --green-light: #e8f9f0;
+  --black: #111827;
+  --gray-bg: #f8fafc;
+  --white: #ffffff;
+  --border-color: #e5e7eb;
+  --text-dark: #111827;
+  --text-gray: #4b5563;
+  --shadow-light: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* GLOBAL STYLES */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: var(--gray-bg);
+  color: var(--text-dark);
+}
+
+/* BUTTONS */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: var(--black);
+}
+
+.btn-primary:hover {
+  background: var(--green-hover);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid var(--text-dark);
+  color: var(--text-dark);
+}
+
+.btn-secondary:hover {
+  background: var(--text-dark);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.btn-edit {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.btn-edit:hover {
+  background: #bfdbfe;
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-delete:hover {
+  background: #fecaca;
+}
+
+/* TABLE */
+.table-container {
+  background: var(--white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-light);
+  margin-bottom: 40px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: var(--gray-bg);
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-dark);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-gray);
+}
+
+.table tr:hover {
+  background: var(--green-light);
+}
+
+/* NO DATA STATE */
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-gray);
+}
+
+/* MODALS */
+.modal-content {
+  border-radius: 12px;
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--border-color);
+}
+
+.modal-body input,
+.modal-body textarea,
+.modal-body select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.modal-body input:focus,
+.modal-body textarea:focus,
+.modal-body select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0,237,100,0.1);
+}
+
+/* EXPORT + ADD BUTTON ROW */
+.export-add-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* EXPORT + PRINT */
+.export-print {
+  display: flex;
+  gap: 10px;
+}
+
+/* SEARCH + FILTER CARD */
+.search-filter-card {
+  background: var(--white);
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-light);
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0,237,100,0.1);
+}
+
+.filters-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filters-row span {
+  white-space: nowrap;
+}
+
+.filters-row select,
+.filters-row input {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.filters-row select:focus,
+.filters-row input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0,237,100,0.1);
+}
+
+/* DATE RANGE FILTER */
+.date-range-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.date-range-filter input[type="date"] {
+    width: 140px;
+}
+
+.date-separator {
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+/* Filters action row */
+.filters-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+

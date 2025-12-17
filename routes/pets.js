@@ -13,9 +13,16 @@ async function getNextPetId() {
 // List all pets
 router.get('/', async (req, res) => {
     const pets = await Pet.find();
+
+    // Create unique species list for filter safely
+    const speciesList = pets.length
+        ? [...new Set(pets.map(p => p.species).filter(Boolean))].sort()
+        : [];
+
     res.render('pets', {
         page: 'pets',
         pets,
+        speciesList, // pass it to EJS
         error: req.query.error || null
     });
 });

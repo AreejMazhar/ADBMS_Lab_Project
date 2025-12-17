@@ -4,93 +4,141 @@
     <meta charset="UTF-8">
     <title>Pets - Pet Shelter Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/table.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
     <%- include('partials/header') %>
-        <% if (error) { %>
-            <div class="modal fade" id="errorModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title">Action Not Allowed</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                    <div class="modal-body">
-                        <p><%= error %></p>
-                    </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <% } %>
 
-
-    <div class="container mt-4">
-        <h1>Pets</h1>
-        <div class="mb-3">
-            <a href="/pets/add" class="btn btn-success">Add New Pet</a>
-        </div>
-
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Species</th>
-                    <th>Breed</th>
-                    <th>Age</th>
-                    <th>Available</th>
-                    <th>Vaccinations</th>
-                    <th>Medical Notes</th>
-                    <th>Microchip</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% pets.forEach(pet => { %>
-                <tr>
-                    <td><%= pet.pet_id %></td>
-                    <td><%= pet.name %></td>
-                    <td><%= pet.species || "-" %></td>
-                    <td><%= pet.breed || "-" %></td>
-                    <td><%= pet.age != null ? pet.age : "-" %></td>
-                    <td><%= pet.available ? "Yes" : "No" %></td>
-                    <td><%= pet.vaccinations.length > 0 ? pet.vaccinations.join(', ') : "-" %></td>
-                    <td><%= pet.medical_notes || "-" %></td>
-                    <td><%= pet.microchip || "-" %></td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <a href="/pets/edit/<%= pet._id %>" class="btn btn-warning btn-sm">Edit</a>
-                            <form action="/pets/delete/<%= pet._id %>" method="POST">
-                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-formid="<%= pet._id %>">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <% if (error) { %>
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <h5 class="modal-title">Action Not Allowed</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    Are you sure you want to delete this pet?
+                    <p><%= error %></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <div class="container mt-4">
+        <h1 class="mb-3">Pets</h1>
+
+        <!-- Top Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/pets/add" class="btn btn-primary">
+                Add New Pet
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary" id="exportCsvBtn">Export CSV</button>
+                <button class="btn btn-secondary" id="printBtn">Print</button>
+            </div>
+        </div>
+
+
+        <!-- Search + Filters Card -->
+        <div class="search-filter-card">
+            <div class="search-bar">
+                <input type="text" id="globalSearch" placeholder="Search pets by ID, Name, Breed, Notes..." class="form-control">
+            </div>
+
+            <div class="filters-row">
+                <span><strong>Filters:</strong></span>
+
+                <select id="filterSpecies" class="form-select form-select-sm">
+                    <option value="">All Species</option>
+                    <% if (speciesList && speciesList.length) { %>
+                        <% speciesList.forEach(s => { %>
+                            <option value="<%= s %>"><%= s %></option>
+                        <% }) %>
+                    <% } %>
+                </select>
+
+                <select id="filterAvailable" class="form-select form-select-sm">
+                    <option value="">All Availability</option>
+                    <option value="yes">Available</option>
+                    <option value="no">Not Available</option>
+                </select>
+
+                <input type="text" id="filterVaccinations" class="form-control form-control-sm" placeholder="Vaccinations contains...">
+                <input type="text" id="filterBreed" class="form-control form-control-sm" placeholder="Breed contains...">
+                <input type="text" id="filterNotes" class="form-control form-control-sm" placeholder="Notes contains...">
+                
+            </div>
+
+            <div class="filters-actions">
+                <button id="clearFiltersBtn" class="btn btn-outline-secondary btn-sm">
+                    Clear Filters
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Species</th>
+                        <th>Breed</th>
+                        <th>Age</th>
+                        <th>Available</th>
+                        <th>Vaccinations</th>
+                        <th>Medical Notes</th>
+                        <th>Microchip</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% pets.forEach(pet => { %>
+                    <tr>
+                        <td><%= pet.pet_id %></td>
+                        <td><%= pet.name %></td>
+                        <td><%= pet.species || "-" %></td>
+                        <td><%= pet.breed || "-" %></td>
+                        <td><%= pet.age != null ? pet.age : "-" %></td>
+                        <td><%= pet.available ? "Yes" : "No" %></td>
+                        <td><%= pet.vaccinations.length > 0 ? pet.vaccinations.join(', ') : "-" %></td>
+                        <td><%= pet.medical_notes || "-" %></td>
+                        <td><%= pet.microchip || "-" %></td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="/pets/edit/<%= pet._id %>" class="btn btn-edit btn-sm">Edit</a>
+                                <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-formid="<%= pet._id %>">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">Are you sure you want to delete this pet?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -100,28 +148,132 @@
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const modalEl = document.getElementById('errorModal');
-            if (modalEl) {
-                const errorModal = new bootstrap.Modal(modalEl);
-                errorModal.show();
-            }
+            const errorModalEl = document.getElementById('errorModal');
+            if (errorModalEl) new bootstrap.Modal(errorModalEl).show();
+
+            // Delete modal
+            const deleteModal = document.getElementById('confirmDeleteModal');
+            deleteModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                const formId = button.getAttribute('data-formid');
+                document.getElementById('deleteForm').action = `/pets/delete/${formId}`;
+            });
+
+            // Global Search + Filters
+            const globalSearch = document.getElementById('globalSearch');
+            const filterSpecies = document.getElementById('filterSpecies');
+            const filterAvailable = document.getElementById('filterAvailable');
+            const filterBreed = document.getElementById('filterBreed');
+            const filterNotes = document.getElementById('filterNotes');
+            const rows = document.querySelectorAll('.table tbody tr');
+        const filterVaccinations = document.getElementById('filterVaccinations');
+
+        function applyFilters() {
+            const searchQuery = globalSearch.value.toLowerCase();
+            rows.forEach(row => {
+                const id = row.cells[0].textContent.toLowerCase();
+                const name = row.cells[1].textContent.toLowerCase();
+                const species = row.cells[2].textContent.toLowerCase();
+                const breed = row.cells[3].textContent.toLowerCase();
+                const available = row.cells[5].textContent.toLowerCase();
+                const vaccinations = row.cells[6].textContent.toLowerCase();
+                const notes = row.cells[7].textContent.toLowerCase();
+
+                let visible = true;
+
+                // Global search (including vaccinations now)
+                visible = visible && (
+                    id.includes(searchQuery) ||
+                    name.includes(searchQuery) ||
+                    breed.includes(searchQuery) ||
+                    notes.includes(searchQuery) ||
+                    vaccinations.includes(searchQuery)
+                );
+
+                // Species filter
+                if (filterSpecies.value) visible = visible && species === filterSpecies.value.toLowerCase();
+
+                // Availability filter
+                if (filterAvailable.value) {
+                    if (filterAvailable.value === "yes") visible = visible && available === "yes";
+                    else visible = visible && available === "no";
+                }
+
+                // Breed filter
+                if (filterBreed.value) visible = visible && breed.includes(filterBreed.value.toLowerCase());
+
+                // Notes filter
+                if (filterNotes.value) visible = visible && notes.includes(filterNotes.value.toLowerCase());
+
+                // Vaccinations filter
+                if (filterVaccinations.value) visible = visible && vaccinations.includes(filterVaccinations.value.toLowerCase());
+
+                row.style.display = visible ? "" : "none";
+            });
+        }
+
+        // Add event listener
+        [globalSearch, filterSpecies, filterAvailable, filterBreed, filterNotes, filterVaccinations].forEach(el => {
+            el.addEventListener('input', applyFilters);
+            el.addEventListener('change', applyFilters);
         });
+
+        // Export CSV
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            const csv = [];
+            const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
+            visibleRows.forEach(row => {
+                csv.push(Array.from(row.cells).map(td => `"${td.textContent}"`).join(','));
+            });
+            const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(csvFile);
+            a.download = 'pets.csv';
+            a.click();
+        });
+
+        // Print
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            globalSearch.value = '';
+            filterSpecies.value = '';
+            filterVaccinations.value = '';
+            filterAvailable.value = '';
+            filterBreed.value = '';
+            filterNotes.value = '';
+            
+            applyFilters();
+        });
+    });
     </script>
 
     <script>
-    let formToSubmit = null;
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        const fields = [
+            'globalSearch',
+            'filterSpecies',
+            'filterVaccinations',
+            'filterAvailable',
+            'filterBreed',
+            'filterNotes'
+        ];
 
-    // When modal is opened, store the form reference
-    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-    confirmDeleteModal.addEventListener('show.bs.modal', event => {
-        const button = event.relatedTarget;
-        formToSubmit = button.closest('form'); // store the form to submit
-    });
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
 
-    // When Yes is clicked, submit the stored form
-    document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-        if (formToSubmit) formToSubmit.submit();
+            if (el.tagName === 'SELECT') {
+                el.selectedIndex = 0;
+            } else {
+                el.value = '';
+            }
+        });
+
+        applyFilters();
     });
     </script>
+
+
 </body>
 </html>

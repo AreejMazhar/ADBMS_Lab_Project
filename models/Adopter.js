@@ -8,7 +8,17 @@ const adopterSchema = new mongoose.Schema({
         match: /^A\d{3}$/  
     },
     name: { type: String, required: true },
-    contact: String,
+    phone: {
+        type: String,
+        required: true
+    },
+
+    email: {
+        type: String,
+        required: false,
+        lowercase: true
+    },                                 // optional
+
     adopted_pet_count: { type: Number, default: 0 },
     notes: { type: String }           // optional
 });

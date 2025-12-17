@@ -28,11 +28,12 @@ router.get('/add', async (req, res) => {
 
 // Handle Add Adopter POST
 router.post('/add', async (req, res) => {
-    const { adopter_id, name, contact, adopted_pet_count, notes } = req.body;
+    const { adopter_id, name, phone, email, adopted_pet_count, notes } = req.body;
     await Adopter.create({
         adopter_id,
         name,
-        contact,
+        phone,
+        email: email || "",
         adopted_pet_count: adopted_pet_count || 0,
         notes: notes || ""
     });
@@ -47,10 +48,11 @@ router.get('/edit/:id', async (req, res) => {
 
 // Handle Edit Adopter POST
 router.post('/edit/:id', async (req, res) => {
-    const { name, contact, adopted_pet_count, notes } = req.body;
+    const { name, phone, email, adopted_pet_count, notes } = req.body;
     await Adopter.findByIdAndUpdate(req.params.id, {
         name,
-        contact,
+        phone,
+        email: email || "",
         adopted_pet_count,
         notes: notes || ""
     });
