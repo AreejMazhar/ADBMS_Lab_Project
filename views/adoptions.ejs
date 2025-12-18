@@ -33,44 +33,52 @@
         <h1 class="mb-3">Adoption Records</h1>
 
         <!-- Top Buttons -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <a href="/adoptions/add" class="btn btn-primary">
-                Add Adoption
-            </a>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <a href="/adoptions/add" class="btn btn-primary">Add Adoption</a>
             <div class="d-flex gap-2">
-                <button class="btn btn-secondary" id="exportCsvBtn">
-                    Export CSV
-                </button>
-                <button class="btn btn-secondary" id="printBtn">
-                    Print
-                </button>
+                <button class="btn btn-secondary" id="exportCsvBtn">Export CSV</button>
+                <button class="btn btn-secondary" id="printBtn">Print</button>
             </div>
         </div>
 
         <!-- Search & Filters -->
-        <div class="search-filter-card mb-3 p-3 border rounded bg-white shadow-sm">
-            <div class="search-bar">
-                <input type="text" id="globalSearch" class="form-control mb-2"
-                placeholder="Search by Record ID, Pet, Adopter, Comments...">
+        <div class="search-filter-card mb-3">
+            <!-- Global Search -->
+            <div class="search-bar mb-2">
+                <input type="text" id="globalSearch" class="form-control" placeholder="Search by Record ID, Pet, Adopter, Comments...">
             </div>
 
+            <!-- Filters Row -->
             <div class="filters-row">
-                    <span><strong>Filters:</strong></span>
-                    <input type="text" id="filterPet" class="form-control form-control-sm" placeholder="Pet name">
-                    <input type="text" id="filterAdopter" class="form-control form-control-sm" placeholder="Adopter name">
-                    <div class="date-range-filter">
-                        <input type="date" id="filterDateFrom" class="form-control form-control-sm">
-                        <span class="date-separator">to</span>
-                        <input type="date" id="filterDateTo" class="form-control form-control-sm">
-                    </div>
+                <span><strong>Filters:</strong></span>
+
+                <!-- Comments Filter -->
+                <select id="filterComments" class="form-select form-select-sm">
+                    <option value="all">All Comments</option>
+                    <option value="has">Has Comments</option>
+                    <option value="none">No Comments</option>
+                </select>
+
+                <!-- Sort by Date -->
+                <select id="sortDate" class="form-select form-select-sm">
+                    <option value="">Select</option>
+                    <option value="newest">Newest to Oldest</option>
+                    <option value="oldest">Oldest to Newest</option>
+                </select>
+
+                <!-- Date Range -->
+                <div class="date-range-filter">
+                    <input type="date" id="filterDateFrom" class="form-control form-control-sm">
+                    <span class="date-separator">to</span>
+                    <input type="date" id="filterDateTo" class="form-control form-control-sm">
+                </div>
+
             </div>
 
+            <!-- Clear Filters Button -->
             <div class="filters-actions">
-                <button id="clearFiltersBtn" class="btn btn-outline-secondary btn-sm">
-                    Clear Filters
-                </button>
+                <button id="clearFiltersBtn" class="btn btn-outline-secondary btn-sm">Clear Filters</button>
             </div>
-
         </div>
 
         <!-- Table -->
@@ -88,7 +96,7 @@
                 </thead>
                 <tbody>
                 <% adoptions.forEach(r => { %>
-                    <tr>
+                    <tr data-date="<%= r.adoption_date.toISOString() %>">
                         <td><%= r.record_id %></td>
                         <td><%= r.pet_name || "-" %></td>
                         <td><%= r.adopter_name || "-" %></td>
@@ -148,49 +156,73 @@
             document.getElementById('deleteForm').action = `/adoptions/delete/${id}`;
         });
 
-        // Filtering
         const rows = document.querySelectorAll('tbody tr');
         const globalSearch = document.getElementById('globalSearch');
-        const filterPet = document.getElementById('filterPet');
-        const filterAdopter = document.getElementById('filterAdopter');
         const filterDateFrom = document.getElementById('filterDateFrom');
         const filterDateTo = document.getElementById('filterDateTo');
+        const filterComments = document.getElementById('filterComments');
+        const sortDate = document.getElementById('sortDate');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
         function applyFilters() {
-            rows.forEach(row => {
+            const rowsArray = Array.from(rows);
+
+            rowsArray.forEach(row => {
                 const id = row.cells[0].textContent.toLowerCase();
                 const pet = row.cells[1].textContent.toLowerCase();
                 const adopter = row.cells[2].textContent.toLowerCase();
-                const date = row.cells[3].textContent;
-                const comments = row.cells[4].textContent.toLowerCase();
+                const date = new Date(row.dataset.date);
+                const comments = row.cells[4].textContent.trim().toLowerCase();
 
                 let visible = true;
+
+                // Global search
                 const q = globalSearch.value.toLowerCase();
+                visible = visible && (id.includes(q) || pet.includes(q) || adopter.includes(q) || comments.includes(q));
 
-                visible = visible && (
-                    id.includes(q) || pet.includes(q) ||
-                    adopter.includes(q) || comments.includes(q)
-                );
+                // Date filter
+                const fromDate = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
+                const toDate = filterDateTo.value ? new Date(filterDateTo.value) : null;
+                if (fromDate && date < fromDate) visible = false;
+                if (toDate && date > toDate) visible = false;
 
-                if (filterPet.value) visible = visible && pet.includes(filterPet.value.toLowerCase());
-                if (filterAdopter.value) visible = visible && adopter.includes(filterAdopter.value.toLowerCase());
-                if (filterDateFrom.value || filterDateTo.value) {
-                    const rowDate = new Date(row.cells[3].textContent);
-                    const fromDate = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
-                    const toDate = filterDateTo.value ? new Date(filterDateTo.value) : null;
-
-                    if (fromDate && rowDate < fromDate) visible = false;
-                    if (toDate && rowDate > toDate) visible = false;
-                }
-
+                // Comments filter
+                if (filterComments.value === 'has' && (!comments || comments === '-')) visible = false;
+                if (filterComments.value === 'none' && comments && comments !== '-') visible = false;
 
                 row.style.display = visible ? "" : "none";
             });
+
+            function sortTable() {
+                const tbody = rows[0].parentNode;
+                const rowsArray = Array.from(rows);
+
+                if (sortDate.value === 'newest') {
+                    rowsArray.sort((a, b) => new Date(b.dataset.date) - new Date(a.dataset.date));
+                } else if (sortDate.value === 'oldest') {
+                    rowsArray.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
+                } else {
+                    // No sorting → return to original order
+                    rowsArray.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
+                }
+
+                rowsArray.forEach(r => tbody.appendChild(r));
+            }
         }
 
-        [globalSearch, filterPet, filterAdopter, filterDateFrom, filterDateTo].forEach(el => {
+        [globalSearch, filterDateFrom, filterDateTo, filterComments, sortDate].forEach(el => {
             el.addEventListener('input', applyFilters);
             el.addEventListener('change', applyFilters);
+            sortTable();
+        });
+
+        clearFiltersBtn.addEventListener('click', () => {
+            globalSearch.value = '';
+            filterDateFrom.value = '';
+            filterDateTo.value = '';
+            filterComments.value = 'all';
+            sortDate.value = 'newest';
+            applyFilters();
         });
 
         // Export CSV
@@ -210,17 +242,6 @@
 
         // Print
         document.getElementById('printBtn').addEventListener('click', () => window.print());
-
-        // Clear Filters
-        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-            globalSearch.value = '';
-            filterPet.value = '';
-            filterAdopter.value = '';
-            filterDateFrom.value = '';
-            filterDateTo.value = '';
-
-            applyFilters(); 
-        });
     });
     </script>
 

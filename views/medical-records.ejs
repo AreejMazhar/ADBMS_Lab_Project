@@ -50,7 +50,6 @@
 
             <div class="filters-row mb-2">
                 <span><strong>Filters:</strong></span>
-                <input type="text" id="filterPet" class="form-control form-control-sm" placeholder="Pet name">
                 <select id="filterType" class="form-select form-select-sm">
                     <option value="">All Types</option>
                     <option value="Vaccination">Vaccination</option>
@@ -154,7 +153,6 @@
         // Filtering
         const rows = document.querySelectorAll('tbody tr');
         const globalSearch = document.getElementById('globalSearch');
-        const filterPet = document.getElementById('filterPet');
         const filterType = document.getElementById('filterType');
         const filterDateFrom = document.getElementById('filterDateFrom');
         const filterDateTo = document.getElementById('filterDateTo');
@@ -188,7 +186,7 @@
             });
         }
 
-        [globalSearch, filterPet, filterType, filterDateFrom, filterDateTo].forEach(el => {
+        [globalSearch, filterType, filterDateFrom, filterDateTo].forEach(el => {
             el.addEventListener('input', applyFilters);
             el.addEventListener('change', applyFilters);
         });

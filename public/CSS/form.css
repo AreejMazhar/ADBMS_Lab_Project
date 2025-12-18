@@ -57,6 +57,13 @@ h1 {
     font-weight: 500;
 }
 
+.form-text {
+    font-size: 0.875rem;
+    color: var(--text-gray);
+    margin-top: 4px; 
+    display: block;
+}
+
 /* Buttons */
 .btn-primary {
     background: var(--green);

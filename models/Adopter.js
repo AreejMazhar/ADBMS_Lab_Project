@@ -10,17 +10,19 @@ const adopterSchema = new mongoose.Schema({
     name: { type: String, required: true },
     phone: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        match: /^03\d{2}-\d{7}$/ // Pakistan mobile format
     },
-
     email: {
         type: String,
         required: false,
-        lowercase: true
-    },                                 // optional
-
+        lowercase: true,
+        unique: true,
+        match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/ // valid email format
+    },
     adopted_pet_count: { type: Number, default: 0 },
-    notes: { type: String }           // optional
+    notes: { type: String }
 });
 
 module.exports = mongoose.model('Adopter', adopterSchema);

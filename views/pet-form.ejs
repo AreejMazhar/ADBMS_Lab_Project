@@ -11,6 +11,25 @@
 
     <%- include('partials/header') %>
 
+    <% if (error) { %>
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><%= error %></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
     <div class="container mt-4">
         <h1><%= pet ? "Edit Pet" : "Add New Pet" %></h1>
 
@@ -30,7 +49,7 @@
             <div class="mb-3">
                 <label for="species" class="form-label">Species</label>
                 <select name="species" class="form-control" required>
-                    <option value="">Select species</option>
+                    <option value="" disabled selected>Select species</option>
                     <option>Dog</option>
                     <option>Cat</option>
                     <option>Rabbit</option>
@@ -53,21 +72,34 @@
             </div>
 
             <div class="mb-3">
-                <label for="age" class="form-label">Age</label>
+                <label for="age" class="form-label">Age (in months)</label>
+                <div class="form-text">Enter age in months. Example: 18 months = 1 year and 6 months.</div>
                 <input type="number" name="age" id="age" class="form-control"
-                    value="<%= pet ? pet.age : '' %>">
+                    value="<%= pet ? pet.age : '' %>" min="0" required>
             </div>
 
             <div class="mb-3 form-check">
-                <input type="checkbox" name="available" id="available" class="form-check-input"
-                    <%= pet && pet.available ? "checked" : "" %>>
+                <input type="checkbox" 
+                    name="available" 
+                    id="available" 
+                    class="form-check-input"
+                    <%= pet && pet.available ? "checked" : "" %>
+                    <%= pet && pet.hasAdoptions ? "disabled" : "" %>>
                 <label for="available" class="form-check-label">Available for Adoption</label>
+                <% if (pet && pet.hasAdoptions) { %>
+                    <div class="form-text text-danger">This pet has adoption records and cannot be made available.</div>
+                <% } %>
             </div>
 
-            <div class="mb-3">
+           <div class="mb-3">
                 <label for="microchip" class="form-label">Microchip Number</label>
-                <input type="text" name="microchip" id="microchip" class="form-control"
-                    value="<%= pet ? pet.microchip : '' %>">
+                <div class="form-text">Optional. Must be in format MC-123456789 if provided.</div>
+                <input type="text" 
+                    name="microchip" 
+                    id="microchip" 
+                    class="form-control"
+                    value="<%= pet ? pet.microchip : '' %>"
+                    pattern="^$|^MC-\d{9}$">
             </div>
 
             <% if (pet) { %>
@@ -116,6 +148,10 @@
                 });
             }
         });
+
+        // Show error modal if exists
+        const errorModalEl = document.getElementById('errorModal');
+        if (errorModalEl) new bootstrap.Modal(errorModalEl).show();
     </script>
 
 </body>

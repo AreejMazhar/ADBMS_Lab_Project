@@ -15,9 +15,11 @@ router.get('/', async (req, res) => {
     const totalAdopters = await Adopter.countDocuments();
     const totalAdoptions = await Adoption.countDocuments();
 
+    const adoptedCount = await Pet.countDocuments({ available: false });
+
     const successRate = totalPets === 0
-      ? 0
-      : Math.round((totalAdoptions / totalPets) * 100);
+        ? 0
+        : Math.round((adoptedCount / totalPets) * 100);
 
     /* =====================
        Top Adopters
@@ -75,10 +77,10 @@ router.get('/', async (req, res) => {
           ageGroup: {
             $switch: {
               branches: [
-                { case: { $lte: ["$pet.age", 2] }, then: "Young" },
-                { case: { $and: [{ $gt: ["$pet.age", 2] }, { $lte: ["$pet.age", 7] }] }, then: "Adult" }
+                { case: { $lte: ["$pet.age", 24] }, then: "Young" },  // 0–24 months
+                { case: { $and: [{ $gt: ["$pet.age", 24] }, { $lte: ["$pet.age", 84] }] }, then: "Adult" } // 25–84 months
               ],
-              default: "Senior"
+              default: "Senior"  // 85+ months
             }
           }
         }

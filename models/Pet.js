@@ -27,9 +27,17 @@ const petSchema = new mongoose.Schema({
         ]
     },
     breed: String,
-    age: Number,
+    age: { 
+        type: Number, 
+        min: [0, 'Age cannot be negative'], 
+        required: true 
+    },
     available: { type: Boolean, default: true },
-    microchip: { type: String }       // optional
+    microchip: { 
+        type: String,
+        unique: true, 
+        match: /^$|^MC-\d{9}$/
+    }
 });
 
 module.exports = mongoose.model('Pet', petSchema);

@@ -50,7 +50,7 @@
         <!-- SEARCH + FILTER CARD -->
         <div class="search-filter-card">
             <div class="search-bar">
-                <input type="text" id="globalSearch" placeholder="Search by ID, Name, Phone, Notes..." class="form-control">
+                <input type="text" id="globalSearch" placeholder="Search by ID, Name, Phone, Email, Notes..." class="form-control">
             </div>
 
             <div class="filters-row">
@@ -163,12 +163,13 @@
             rows.forEach(row => {
                 const id = row.cells[0].textContent.toLowerCase();
                 const name = row.cells[1].textContent.toLowerCase();
+                const phone = row.cells[2].textContent.toLowerCase();
                 const email = row.cells[3].textContent.toLowerCase();
                 const notes = row.cells[5].textContent.toLowerCase();
                 const petCount = parseInt(row.cells[4].textContent);
                 let visible = true;
 
-                visible = visible && (id.includes(query) || name.includes(query) || email.includes(query) || notes.includes(query));
+                visible = visible && (id.includes(query) || name.includes(query) || phone.includes(query) || email.includes(query) || notes.includes(query));
 
                 if (filterPets.value) {
                     visible = visible && (filterPets.value === "2" ? petCount >= 2 : petCount === parseInt(filterPets.value));

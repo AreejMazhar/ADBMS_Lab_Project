@@ -23,40 +23,92 @@ router.get('/', async (req, res) => {
 // Show Add Adopter Form
 router.get('/add', async (req, res) => {
     const nextId = await getNextAdopterId();
-    res.render('adopter-form', { page: 'adopters', adopter: null, nextId });
+    res.render('adopter-form', { 
+        page: 'adopters', 
+        adopter: null, 
+        nextId,
+        error: req.query.error || null
+    });
 });
 
 // Handle Add Adopter POST
 router.post('/add', async (req, res) => {
-    const { adopter_id, name, phone, email, adopted_pet_count, notes } = req.body;
-    await Adopter.create({
-        adopter_id,
-        name,
-        phone,
-        email: email || "",
-        adopted_pet_count: adopted_pet_count || 0,
-        notes: notes || ""
-    });
-    res.redirect('/adopters');
+    try {
+        const { adopter_id, name, phone, email, notes } = req.body;
+
+        // Check if phone already exists
+        const phoneExists = await Adopter.findOne({ phone });
+        if (phoneExists) {
+            return res.redirect(`/adopters/add?error=${encodeURIComponent('Phone number already exists')}`);
+        }
+
+        // Check if email already exists (if provided)
+        if (email) {
+            const emailExists = await Adopter.findOne({ email });
+            if (emailExists) {
+                return res.redirect(`/adopters/add?error=${encodeURIComponent('Email already exists')}`);
+            }
+        }
+
+        await Adopter.create({
+            adopter_id,
+            name,
+            phone,
+            email: email || "",
+            adopted_pet_count: 0, // always 0 when adding
+            notes: notes || ""
+        });
+
+        res.redirect('/adopters');
+    } catch (err) {
+        console.error(err);
+        res.redirect(`/adopters/add?error=${encodeURIComponent('Something went wrong')}`);
+    }
 });
 
 // Show Edit Adopter Form
 router.get('/edit/:id', async (req, res) => {
     const adopter = await Adopter.findById(req.params.id);
-    res.render('adopter-form', { page: 'adopters', adopter, nextId: null });
+    res.render('adopter-form', { 
+        page: 'adopters', 
+        adopter, 
+        nextId: null,
+        error: req.query.error || null
+    });
 });
 
 // Handle Edit Adopter POST
 router.post('/edit/:id', async (req, res) => {
-    const { name, phone, email, adopted_pet_count, notes } = req.body;
-    await Adopter.findByIdAndUpdate(req.params.id, {
-        name,
-        phone,
-        email: email || "",
-        adopted_pet_count,
-        notes: notes || ""
-    });
-    res.redirect('/adopters');
+    try {
+        const { name, phone, email, notes } = req.body;
+        const adopterId = req.params.id;
+
+        // Check phone uniqueness excluding this adopter
+        const phoneExists = await Adopter.findOne({ phone, _id: { $ne: adopterId } });
+        if (phoneExists) {
+            return res.redirect(`/adopters/edit/${adopterId}?error=${encodeURIComponent('Phone number already exists')}`);
+        }
+
+        // Check email uniqueness if provided, excluding this adopter
+        if (email) {
+            const emailExists = await Adopter.findOne({ email, _id: { $ne: adopterId } });
+            if (emailExists) {
+                return res.redirect(`/adopters/edit/${adopterId}?error=${encodeURIComponent('Email already exists')}`);
+            }
+        }
+
+        await Adopter.findByIdAndUpdate(adopterId, {
+            name,
+            phone,
+            email: email || "",
+            notes: notes || ""
+        });
+
+        res.redirect('/adopters');
+    } catch (err) {
+        console.error(err);
+        res.redirect(`/adopters/edit/${req.params.id}?error=${encodeURIComponent('Something went wrong')}`);
+    }
 });
 
 // Delete Adopter

@@ -70,7 +70,23 @@
                 </select>
 
                 <input type="text" id="filterBreed" class="form-control form-control-sm" placeholder="Breed contains...">
-                <input type="text" id="filterNotes" class="form-control form-control-sm" placeholder="Notes contains...">
+                
+                <select id="filterAge" class="form-select form-select-sm">
+                    <option value="">All Ages</option>
+                    <option value="0-6">0-6 months</option>
+                    <option value="7-12">7-12 months</option>
+                    <option value="13-24">1-2 years</option>
+                    <option value="25-36">2-3 years</option>
+                    <option value="37-60">3-5 years</option>
+                    <option value="61-120">5-10 years</option>
+                    <option value="121-999">10+ years</option>
+                </select>
+
+                <select id="filterMicrochip" class="form-select form-select-sm">
+                    <option value="">All Microchip</option>
+                    <option value="with">With Microchip</option>
+                    <option value="without">Without Microchip</option>
+                </select>
                 
             </div>
 
@@ -105,7 +121,7 @@
                         <td><%= pet.name %></td>
                         <td><%= pet.species || "-" %></td>
                         <td><%= pet.breed || "-" %></td>
-                        <td><%= pet.age != null ? pet.age : "-" %></td>
+                        <td data-age="<%= pet.age %>"><%= formatAge(pet.age) %></td>
                         <td><%= pet.available ? "Yes" : "No" %></td>
                         <td>
                             <a href="/medicalrecords?pet_id=<%= pet.pet_id %>&pet_name=<%= encodeURIComponent(pet.name) %>" class="btn btn-sm btn-primary">
@@ -165,7 +181,8 @@
             const filterSpecies = document.getElementById('filterSpecies');
             const filterAvailable = document.getElementById('filterAvailable');
             const filterBreed = document.getElementById('filterBreed');
-            const filterNotes = document.getElementById('filterNotes');
+            const filterAge = document.getElementById('filterAge');
+            const filterMicrochip = document.getElementById('filterMicrochip');
             const rows = document.querySelectorAll('.table tbody tr');
         
         function applyFilters() {
@@ -175,17 +192,17 @@
                 const name = row.cells[1].textContent.toLowerCase();
                 const species = row.cells[2].textContent.toLowerCase();
                 const breed = row.cells[3].textContent.toLowerCase();
+                const age = parseInt(row.cells[4].dataset.age) || 0; // raw age in months
                 const available = row.cells[5].textContent.toLowerCase();
                 const notes = row.cells[7].textContent.toLowerCase();
 
                 let visible = true;
 
-                // Global search (including vaccinations now)
+                // Global search
                 visible = visible && (
                     id.includes(searchQuery) ||
                     name.includes(searchQuery) ||
-                    breed.includes(searchQuery) ||
-                    notes.includes(searchQuery)
+                    breed.includes(searchQuery)
                 );
 
                 // Species filter
@@ -200,15 +217,26 @@
                 // Breed filter
                 if (filterBreed.value) visible = visible && breed.includes(filterBreed.value.toLowerCase());
 
-                // Notes filter
-                if (filterNotes.value) visible = visible && notes.includes(filterNotes.value.toLowerCase());
+                // Age filter
+                if (filterAge.value) {
+                    const [min, max] = filterAge.value.split('-').map(Number);
+                    visible = visible && age >= min && age <= max;
+                }
+
+                // Microchip filter
+                if (filterMicrochip.value) {
+                    const hasChip = row.cells[7].textContent.trim() !== "-";
+                    if (filterMicrochip.value === "with") visible = visible && hasChip;
+                    else visible = visible && !hasChip;
+                }
+
 
                 row.style.display = visible ? "" : "none";
             });
         }
 
         // Add event listener
-        [globalSearch, filterSpecies, filterAvailable, filterBreed, filterNotes].forEach(el => {
+        [globalSearch, filterSpecies, filterAvailable, filterBreed, filterAge, filterMicrochip].forEach(el => {
             el.addEventListener('input', applyFilters);
             el.addEventListener('change', applyFilters);
         });
@@ -235,7 +263,8 @@
             filterSpecies.value = '';
             filterAvailable.value = '';
             filterBreed.value = '';
-            filterNotes.value = '';
+            filterAge.value = '';
+            filterMicrochip.value = '';
             
             applyFilters();
         });

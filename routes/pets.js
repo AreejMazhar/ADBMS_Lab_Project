@@ -22,8 +22,21 @@ router.get('/', async (req, res) => {
     res.render('pets', {
         page: 'pets',
         pets,
-        speciesList, // pass it to EJS
-        error: req.query.error || null
+        speciesList,
+        error: req.query.error || null,
+        formatAge: function(months) {
+            if (months == null) return "-";
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+
+            let result = "";
+            if (years > 0) result += `${years} year${years > 1 ? 's' : ''}`;
+            if (years > 0 && remainingMonths > 0) result += " and ";
+            if (remainingMonths > 0) result += `${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
+            if (!result) result = "0 months";
+
+            return result;
+        }
     });
 });
 
@@ -33,49 +46,88 @@ router.get('/add', async (req, res) => {
     res.render('pet-form', {
         page: 'pets',
         pet: null,
-        nextId
+        nextId,
+        error: req.query.error || null
     });
 });
 
-
 // Handle Add Pet POST
 router.post('/add', async (req, res) => {
-    const { pet_id, name, species, breed, age, available, microchip } = req.body;
-    await Pet.create({
-        pet_id,
-        name,
-        species,
-        breed,
-        age,
-        available: available === 'on',
-        microchip: microchip || ""
-    });
-    res.redirect('/pets');
+    try {
+        const { pet_id, name, species, breed, age, available, microchip } = req.body;
+
+        // Check if microchip already exists (only if provided)
+        if (microchip) {
+            const existing = await Pet.findOne({ microchip });
+            if (existing) {
+                return res.redirect(`/pets/add?error=${encodeURIComponent('Microchip already exists')}`);
+            }
+        }
+
+        await Pet.create({
+            pet_id,
+            name,
+            species,
+            breed,
+            age,
+            available: available === 'on',
+            microchip: microchip || ""
+        });
+
+        res.redirect('/pets');
+    } catch (err) {
+        console.error(err);
+        res.redirect(`/pets/add?error=${encodeURIComponent('Something went wrong')}`);
+    }
 });
 
 // Show Edit Pet Form
 router.get('/edit/:id', async (req, res) => {
     const pet = await Pet.findById(req.params.id);
+    const hasAdoptions = await Adoption.exists({ pet_id: pet.pet_id });
+
     res.render('pet-form', {
         page: 'pets',
-        pet,
-        nextId: null
+        pet: { ...pet.toObject(), hasAdoptions },
+        nextId: null,
+        error: req.query.error || null
     });
 });
 
 
 // Handle Edit Pet POST
 router.post('/edit/:id', async (req, res) => {
-    const { name, species, breed, age, available, microchip } = req.body;
-    await Pet.findByIdAndUpdate(req.params.id, {
-        name,
-        species,
-        breed,
-        age,
-        available: available === 'on',
-        microchip: microchip || ""
-    });
-    res.redirect('/pets');
+    try {
+        const { name, species, breed, age, available, microchip } = req.body;
+        const petId = req.params.id;
+
+        const pet = await Pet.findById(petId);
+        const hasAdoptions = await Adoption.exists({ pet_id: pet.pet_id });
+
+        // Check microchip uniqueness if provided, excluding current pet
+        if (microchip) {
+            const existing = await Pet.findOne({ microchip, _id: { $ne: petId } });
+            if (existing) {
+                return res.redirect(`/pets/edit/${petId}?error=${encodeURIComponent('Microchip already exists')}`);
+            }
+        }
+
+        const updatedData = {
+            name,
+            species,
+            breed,
+            age,
+            microchip: microchip || "",
+            available: hasAdoptions ? false : (available === 'on')
+        };
+
+        await Pet.findByIdAndUpdate(petId, updatedData);
+
+        res.redirect('/pets');
+    } catch (err) {
+        console.error(err);
+        res.redirect(`/pets/edit/${req.params.id}?error=${encodeURIComponent('Something went wrong')}`);
+    }
 });
 
 // Delete Pet
