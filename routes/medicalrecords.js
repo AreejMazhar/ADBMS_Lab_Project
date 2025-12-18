@@ -57,9 +57,10 @@ router.get('/add', async (req, res) => {
         record: null, 
         pets, 
         nextId,
-        page: 'medicalrecords'  // <--- include this
+        page: 'medicalrecords' 
     });
 });
+
 // Handle Add POST
 router.post('/add', async (req, res) => {
     const { record_id, pet_id, type, vaccination_name, diagnosis, treatment, notes } = req.body;
@@ -83,7 +84,7 @@ router.get('/edit/:id', async (req, res) => {
     res.render('medical-record-form', { 
         record, 
         pets,
-        page: 'medicalrecords'  // <--- include this
+        page: 'medicalrecords' 
     });
 });
 

@@ -57,13 +57,14 @@ router.get('/add', async (req, res) => {
         }));
 
         return res.render('adoptions', {
+            page: 'adoptions',
             adoptions: populated,
             error: 'No available pets. Please add pets or mark one as available first.'
         });
     }
 
     // Normal case → show add form
-    res.render('adoption-form', { adoption: null, pets, adopters, nextId });
+    res.render('adoption-form', { page: 'adoptions', adoption: null, pets, adopters, nextId });
 });
 
 // Handle Add Adoption POST
@@ -101,7 +102,7 @@ router.get('/edit/:id', async (req, res) => {
     const pets = [...availablePets, ...currentPet.filter(p => !availablePets.some(ap => ap.pet_id === p.pet_id))];
 
     const adopters = await Adopter.find().lean();
-    res.render('adoption-form', { adoption, pets, adopters, nextId: null });
+    res.render('adoption-form', { page: 'adoptions', adoption, pets, adopters, nextId: null });
 });
 
 // Handle Edit Adoption POST

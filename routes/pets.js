@@ -30,8 +30,13 @@ router.get('/', async (req, res) => {
 // Show Add Pet Form
 router.get('/add', async (req, res) => {
     const nextId = await getNextPetId();
-    res.render('pet-form', { pet: null, nextId });
+    res.render('pet-form', {
+        page: 'pets',
+        pet: null,
+        nextId
+    });
 });
+
 
 // Handle Add Pet POST
 router.post('/add', async (req, res) => {
@@ -51,8 +56,13 @@ router.post('/add', async (req, res) => {
 // Show Edit Pet Form
 router.get('/edit/:id', async (req, res) => {
     const pet = await Pet.findById(req.params.id);
-    res.render('pet-form', { pet, nextId: null });
+    res.render('pet-form', {
+        page: 'pets',
+        pet,
+        nextId: null
+    });
 });
+
 
 // Handle Edit Pet POST
 router.post('/edit/:id', async (req, res) => {

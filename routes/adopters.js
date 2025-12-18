@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 // Show Add Adopter Form
 router.get('/add', async (req, res) => {
     const nextId = await getNextAdopterId();
-    res.render('adopter-form', { adopter: null, nextId });
+    res.render('adopter-form', { page: 'adopters', adopter: null, nextId });
 });
 
 // Handle Add Adopter POST
@@ -43,7 +43,7 @@ router.post('/add', async (req, res) => {
 // Show Edit Adopter Form
 router.get('/edit/:id', async (req, res) => {
     const adopter = await Adopter.findById(req.params.id);
-    res.render('adopter-form', { adopter, nextId: null });
+    res.render('adopter-form', { page: 'adopters', adopter, nextId: null });
 });
 
 // Handle Edit Adopter POST
