@@ -82,13 +82,15 @@ body {
 .table-container {
   background: var(--white);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: var(--shadow-light);
   margin-bottom: 40px;
 }
 
 .table {
   width: 100%;
+  min-width: 900px;
   border-collapse: collapse;
 }
 
@@ -99,6 +101,10 @@ body {
   font-weight: 600;
   color: var(--text-dark);
   border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--gray-bg);
 }
 
 .table td {

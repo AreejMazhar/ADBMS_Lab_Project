@@ -64,7 +64,6 @@ body {
   margin: 0 auto;
 }
 
-
 .feature-card {
   background: var(--white);
   border-radius: 12px;
@@ -79,6 +78,23 @@ body {
 .feature-card:hover {
   transform: translateY(-10px);
   box-shadow: var(--shadow-hover);
+}
+
+@media (max-width: 1500px) {
+  .features {
+    display: flex;
+    flex-wrap:wrap;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: 1600px;
+    margin: 0 auto;
+    justify-content: center;
+  }
+
+  .feature-card {
+    width: 100%;
+    max-width: 340px;
+  }
 }
 
 .blue-indicator {

@@ -29,8 +29,21 @@
 
             <div class="mb-3">
                 <label for="species" class="form-label">Species</label>
-                <input type="text" name="species" id="species" class="form-control"
-                    value="<%= pet ? pet.species : '' %>">
+                <select name="species" class="form-control" required>
+                    <option value="">Select species</option>
+                    <option>Dog</option>
+                    <option>Cat</option>
+                    <option>Rabbit</option>
+                    <option>Bird</option>
+                    <option>Hamster</option>
+                    <option>Guinea Pig</option>
+                    <option>Rat</option>
+                    <option>Ferret</option>
+                    <option>Snake</option>
+                    <option>Lizard</option>
+                    <option>Fish</option>
+                    <option>Turtle</option>
+                </select>
             </div>
 
             <div class="mb-3">
@@ -51,20 +64,8 @@
                 <label for="available" class="form-check-label">Available for Adoption</label>
             </div>
 
-            <!-- Optional fields -->
             <div class="mb-3">
-                <label for="vaccinations" class="form-label">Vaccinations (comma-separated)</label>
-                <input type="text" name="vaccinations" id="vaccinations" class="form-control"
-                    value="<%= pet ? (pet.vaccinations ? pet.vaccinations.join(', ') : '') : '' %>">
-            </div>
-
-            <div class="mb-3">
-                <label for="medical_notes" class="form-label">Medical Notes</label>
-                <textarea name="medical_notes" id="medical_notes" class="form-control"><%= pet ? pet.medical_notes : '' %></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="microchip" class="form-label">Microchip</label>
+                <label for="microchip" class="form-label">Microchip Number</label>
                 <input type="text" name="microchip" id="microchip" class="form-control"
                     value="<%= pet ? pet.microchip : '' %>">
             </div>

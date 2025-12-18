@@ -1,90 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Reports - Pet Shelter Portal</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8">
+  <title>Reports - Pet Shelter Portal</title>
+
+  <link rel="stylesheet" href="/css/navbar.css">
+  <link rel="stylesheet" href="/css/report.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    <%- include('partials/header') %>
+  <%- include('partials/header') %>
 
-    <div class="container mt-4">
-        <h1>Reports</h1>
-        <p class="text-muted">Overview of adoption statistics and analytics.</p>
+  <section class="hero">
+    <h1 class="page-title">Reports & Analytics</h1>
+    <p class="page-description">
+      Overview of adoption statistics and performance metrics.
+    </p>
+  </section>
 
-        <!-- Summary Cards -->
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
-                <div class="card text-bg-primary h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Pets</h5>
-                        <p class="card-text display-6"><%= totalPets %></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card text-bg-success h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Adopters</h5>
-                        <p class="card-text display-6"><%= totalAdopters %></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card text-bg-warning h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Adoptions</h5>
-                        <p class="card-text display-6"><%= totalAdoptions %></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="main-content">
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-label">Total Pets</div>
+        <div class="stat-value"><%= totalPets %></div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-label">Total Adopters</div>
+        <div class="stat-value"><%= totalAdopters %></div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-label">Total Adoptions</div>
+        <div class="stat-value"><%= totalAdoptions %></div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value"><%= successRate %>%</div>
+      </div>
+    </div>
+
+    <!-- TABLES -->
+    <div class="tables-grid">
 
         <!-- Top Adopters -->
-        <div class="mb-5">
-            <h3>Top Adopters</h3>
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
+        <div class="table-container">
+            <h3>Top 5 Adopters</h3>
+            <table class="table">
+                <thead>
                     <tr>
-                        <th>Adopter Name</th>
-                        <th>Number of Adoptions</th>
+                    <th>Name</th>
+                    <th>Adoptions</th>
+                    <th>Last Adoption</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    <% topAdopters.forEach(adopter => { %>
+                    <% topAdopters.forEach(a => { %>
                     <tr>
-                        <td><%= adopter.name %></td>
-                        <td><span class="badge bg-primary"><%= adopter.count %></span></td>
+                        <td><%= a.name %></td>
+                        <td><%= a.adoptions %></td>
+                        <td><%= a.lastAdoption ? new Date(a.lastAdoption).toLocaleDateString() : "-" %></td>
                     </tr>
                     <% }) %>
                 </tbody>
             </table>
         </div>
 
-        <!-- Most Adopted Species -->
-        <div class="mb-5">
+        <!-- Species -->
+        <div class="table-container">
             <h3>Most Adopted Species</h3>
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
+            <table class="table">
+                <thead>
                     <tr>
-                        <th>Species</th>
-                        <th>Number of Adoptions</th>
+                    <th>Species</th>
+                    <th>Adoptions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <% speciesStats.forEach(species => { %>
-                    <tr>
-                        <td><%= species._id %></td>
-                        <td><span class="badge bg-success"><%= species.count %></span></td>
-                    </tr>
-                    <% }) %>
-                </tbody>
+                
+            <tbody>
+                <% speciesStats.forEach(s => { %>
+                <tr>
+                    <td><%= s._id %></td>
+                    <td><%= s.count %></td>
+                </tr>
+                <% }) %>
+            </tbody>
             </table>
+        </div>
+
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CHARTS -->
+    <div class="chart-container">
+
+    <!-- Top Row: Line and Bar Charts -->
+        <div class="chart-row row-full">
+            <!-- Monthly Adoptions -->
+            <div class="chart-wrapper">
+                <h3>Monthly Adoptions</h3>
+                <div class="year-selector">
+                    <label for="yearSelect">Year:</label>
+                    <select id="yearSelect">
+                    <% Object.keys(monthlyDataByYear).sort((a,b)=>b-a).forEach(y => { %>
+                        <option value="<%= y %>" <%= y == new Date().getFullYear() ? 'selected' : '' %>><%= y %></option>
+                    <% }) %>
+                    </select>
+                </div>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-row row-bar">
+            <!-- Age Group Adoption Chart -->
+            <div class="chart-wrapper">
+                <h3>Adoptions by Age Group</h3>
+                <canvas id="ageGroupChart"></canvas>
+            </div>
+
+            <!-- Breed Popularity Chart -->
+            <div class="chart-wrapper">
+                <h3>Top Breeds Adopted</h3>
+                <div class="species-selector">
+                    <label for="speciesSelect">Species:</label>
+                    <select id="speciesSelect">
+                        <option value="All" <%= selectedSpecies === "All" ? "selected" : "" %>>All</option>
+                        <% speciesStats.forEach(s => { %>
+                            <option value="<%= s._id %>" <%= selectedSpecies === s._id ? "selected" : "" %>><%= s._id %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <canvas id="breedChart"></canvas>
+            </div>
+        </div>
+    
+        <!-- Bottom Row: Doughnut Charts -->
+        <div class="chart-row row-donut">
+            <!-- Species Distribution -->
+            <div class="chart-wrapper">
+                <h3>Species Distribution</h3>
+                <canvas id="speciesChart"></canvas>
+            </div>
+
+            <!-- Vaccination Coverage -->
+            <div class="chart-wrapper">
+                <h3>Vaccination Coverage</h3>
+                <canvas id="vaccinationChart"></canvas>
+            </div>
+
+            <!-- Common Diagnoses -->
+            <div class="chart-wrapper">
+                <h3>Common Diagnoses</h3>
+                <canvas id="diagnosisChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+  <!-- CHART SCRIPT -->
+  <script>
+    const monthlyDataByYear = <%- JSON.stringify(monthlyDataByYear || {}) %>;
+
+    const speciesLabels = <%- JSON.stringify(speciesStats.map(s => s._id)) %>;
+    const speciesCounts = <%- JSON.stringify(speciesStats.map(s => s.count)) %>;
+
+    const ageGroupLabels = <%- JSON.stringify(ageGroupLabels || []) %>;
+    const ageGroupCounts = <%- JSON.stringify(ageGroupCounts || []) %>;
+
+    const breedBySpecies = <%- JSON.stringify(breedBySpecies || {}) %>;
+
+    const vaccinationLabels = <%- JSON.stringify(vaccinationLabels || []) %>;
+    const vaccinationCounts = <%- JSON.stringify(vaccinationCounts || []) %>;
+
+    const diagnosisLabels = <%- JSON.stringify(diagnosisLabels || []) %>;
+    const diagnosisCounts = <%- JSON.stringify(diagnosisCounts || []) %>;
+
+    const barColors = ['#4F46E5', '#22D3EE','#FBBF24', '#F87171','#34D399','#F472B6','#A78BFA','#FB7185','#60A5FA','#FACC15'];
+    
+
+    // Monthly Chart
+    const monthCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(monthCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [{
+          label: 'Adoptions',
+          data: monthlyDataByYear[new Date().getFullYear()] || Array(12).fill(0),
+          borderColor: '#4F46E5',
+          backgroundColor: '#4F46E580',
+          borderWidth: 3,
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { font: { family: 'Inter', weight: '500' }, color: '#1F2937' } }
+        },
+        scales: {
+          x: { ticks: { font: { family: 'Inter' }, color: '#1F2937' } },
+          y: { ticks: { font: { family: 'Inter' }, color: '#1F2937' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // Species Doughnut Chart
+    const speciesCtx = document.getElementById('speciesChart').getContext('2d');
+    new Chart(speciesCtx, {
+      type: 'doughnut',
+      data: {
+        labels: speciesLabels,
+        datasets: [{
+          data: speciesCounts,
+          backgroundColor: ['#4F46E5','#22D3EE','#FBBF24','#F87171','#34D399','#F472B6']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { family: 'Inter' }, color: '#1F2937' } }
+        }
+      }
+    });
+
+    // Year selector listener
+    const yearSelect = document.getElementById('yearSelect');
+    yearSelect.addEventListener('change', function() {
+      const year = this.value;
+      monthlyChart.data.datasets[0].data = monthlyDataByYear[year] || Array(12).fill(0);
+      monthlyChart.update();
+    });
+
+    // Age Group Chart
+    const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
+    new Chart(ageGroupCtx, {
+        type: 'bar',
+        data: { labels: ageGroupLabels, datasets: [{ label: 'Adoptions', data: ageGroupCounts, backgroundColor: ['#4F46E5','#22D3EE','#FBBF24','#F87171','#34D399','#F472B6'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { ticks: { font: { family: 'Inter' }, color: '#1F2937' } },
+            y: { ticks: { font: { family: 'Inter' }, color: '#1F2937' }, beginAtZero: true } } }
+    });
+
+    // Breed Bar Chart
+    const breedCtx = document.getElementById('breedChart').getContext('2d');
+    const breedChart = new Chart(breedCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+            label: 'Adoptions',
+            data: [],
+            backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Species selector listener
+    const speciesSelect = document.getElementById('speciesSelect');
+    speciesSelect.addEventListener('change', function () {
+        const species = this.value;
+        let data = [];
+
+        if (species === 'All') {
+            const breedMap = {};
+
+            Object.values(breedBySpecies).forEach(speciesArray => {
+                speciesArray.forEach(b => {
+                const key = b.breed || 'Unknown';
+                breedMap[key] = (breedMap[key] || 0) + b.count;
+                });
+            });
+
+            data = Object.entries(breedMap)
+                .map(([breed, count]) => ({ breed, count }))
+                .sort((a, b) => b.count - a.count);
+        } else {
+            data = breedBySpecies[species] || [];
+        }
+
+        breedChart.data.labels = data.map(b => b.breed || 'Unknown');
+        breedChart.data.datasets[0].data = data.map(b => b.count);
+        breedChart.data.datasets[0].backgroundColor =
+            data.map((_, i) => barColors[i % barColors.length]);
+        breedChart.update();
+    });
+    speciesSelect.dispatchEvent(new Event('change'));
+
+    // Vaccination Chart
+    const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');
+    new Chart(vaccinationCtx, {
+        type: 'doughnut',
+        data: {
+        labels: vaccinationLabels,
+        datasets: [{
+            data: vaccinationCounts,
+            backgroundColor: ['#4F46E5','#22D3EE','#FBBF24','#F87171','#34D399','#F472B6']
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Inter' }, color: '#1F2937' } }
+        }
+        }
+    });
+
+    // Diagnosis Chart
+    const diagnosisCtx = document.getElementById('diagnosisChart').getContext('2d');
+    new Chart(diagnosisCtx, {
+        type: 'doughnut',
+        data: {
+        labels: diagnosisLabels,
+        datasets: [{
+            data: diagnosisCounts,
+            backgroundColor: ['#4F46E5','#22D3EE','#FBBF24','#F87171','#34D399','#F472B6']
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Inter' }, color: '#1F2937' } }
+        }
+        }
+    });
+  </script>
+
 </body>
 </html>
