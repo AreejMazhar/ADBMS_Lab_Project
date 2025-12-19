@@ -13,23 +13,17 @@ async function getNextRecordId() {
 
 // List all medical records (with optional pet filter)
 router.get('/', async (req, res) => {
-    const { pet_id, pet_name } = req.query;
+    const petId = req.query.pet_id || null;
 
-    // Build filter object
-    const filter = {};
-    if (pet_id) filter.pet_id = pet_id;
-    if (pet_name) {
-        const pet = await Pet.findOne({ name: pet_name });
-        if (pet) filter.pet_id = pet.pet_id;
-    }
-
-    const records = await MedicalRecord.find(filter).lean();
+    const query = petId ? { pet_id: petId } : {};
+    const records = await MedicalRecord.find(query).lean();
 
     const populated = await Promise.all(records.map(async rec => {
         const pet = await Pet.findOne({ pet_id: rec.pet_id });
         return {
             _id: rec._id,
             record_id: rec.record_id,
+            pet_id: rec.pet_id, 
             pet_name: pet ? pet.name : "-",
             type: rec.type,
             vaccination_name: rec.vaccination_name || "-",
@@ -44,7 +38,8 @@ router.get('/', async (req, res) => {
     res.render('medical-records', {
         page: 'medicalrecords',
         records: populated,
-        error: req.query.error || null
+        error: req.query.error || null,
+        selectedPetId: req.query.pet_id || null
     });
 });
 

@@ -12,6 +12,10 @@
 
     <%- include('partials/header') %>
 
+    <script>
+        const INITIAL_PET_ID = "<%= selectedPetId || '' %>";
+    </script>
+
     <% if (error) { %>
     <div class="modal fade" id="errorModal" tabindex="-1">
         <div class="modal-dialog">
@@ -105,6 +109,7 @@
                 <tbody>
                 <% records.forEach(r => { %>
                     <tr 
+                    data-pet-id="<%= r.pet_id %>"
                     data-created="<%= r.createdAt ? r.createdAt.toISOString() : '' %>"
                     data-updated="<%= r.updatedAt ? r.updatedAt.toISOString() : '' %>"
                     >
@@ -157,197 +162,190 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', () => {
 
-        /* =========================
-            MODALS
-        ========================== */
+            /* =========================
+                INITIAL PET FILTER (from Pets page)
+            ========================== */
+            let initialPetId = INITIAL_PET_ID?.trim() || ''; // ensure it's a trimmed string
 
-        const errorModal = document.getElementById('errorModal');
-        if (errorModal) new bootstrap.Modal(errorModal).show();
+            /* =========================
+                MODALS
+            ========================== */
+            const errorModal = document.getElementById('errorModal');
+            if (errorModal) new bootstrap.Modal(errorModal).show();
 
-        const deleteModal = document.getElementById('confirmDeleteModal');
-        deleteModal.addEventListener('show.bs.modal', e => {
-            const id = e.relatedTarget.getAttribute('data-id');
-            document.getElementById('deleteForm').action = `/medicalrecords/delete/${id}`;
-        });
-
-        /* =========================
-            ELEMENT REFERENCES
-        ========================== */
-
-        const rows = Array.from(document.querySelectorAll('tbody tr'));
-        const tbody = rows[0]?.parentNode;
-
-        const globalSearch = document.getElementById('globalSearch');
-        const filterType = document.getElementById('filterType');
-        const sortDate = document.getElementById('sortDate');
-
-        const createdFrom = document.getElementById('createdFrom');
-        const createdTo = document.getElementById('createdTo');
-        const updatedFrom = document.getElementById('updatedFrom');
-        const updatedTo = document.getElementById('updatedTo');
-
-        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-
-        /* =========================
-            PRESERVE ORIGINAL ORDER
-        ========================== */
-
-        rows.forEach((row, index) => {
-            row.dataset.originalIndex = index;
-        });
-
-        /* =========================
-            HELPERS
-        ========================== */
-
-        function inRange(date, from, to) {
-            if (!date) return true;
-            if (from && date < from) return false;
-            if (to && date > to) return false;
-            return true;
-        }
-
-        /* =========================
-            FILTERING
-        ========================== */
-
-        function applyFilters() {
-            rows.forEach(row => {
-                const id = row.cells[0].textContent.toLowerCase();
-                const pet = row.cells[1].textContent.toLowerCase();
-                const type = row.cells[2].textContent.toLowerCase();
-                const notesText = row.cells[6].textContent.trim();
-                const notes = notesText === '-' ? '' : notesText.toLowerCase();
-
-                const createdDate = row.dataset.created ? new Date(row.dataset.created) : null;
-                const updatedDate = row.dataset.updated ? new Date(row.dataset.updated) : null;
-
-                let visible = true;
-
-                /* Global search */
-                const q = globalSearch.value.toLowerCase();
-                if (q && !(id.includes(q) || pet.includes(q) || type.includes(q) || notes.includes(q))) {
-                    visible = false;
-                }
-
-                /* Type filter */
-                if (filterType.value && type !== filterType.value.toLowerCase()) {
-                    visible = false;
-                }
-
-                /* Created date range */
-                const createdFromDate = createdFrom.value
-                    ? new Date(createdFrom.value + 'T00:00:00')
-                    : null;
-                const createdToDate = createdTo.value
-                    ? new Date(createdTo.value + 'T23:59:59')
-                    : null;
-
-                if (!inRange(createdDate, createdFromDate, createdToDate)) {
-                    visible = false;
-                }
-
-                /* Updated date range */
-                const updatedFromDate = updatedFrom.value
-                    ? new Date(updatedFrom.value + 'T00:00:00')
-                    : null;
-                const updatedToDate = updatedTo.value
-                    ? new Date(updatedTo.value + 'T23:59:59')
-                    : null;
-
-                if (!inRange(updatedDate, updatedFromDate, updatedToDate)) {
-                    visible = false;
-                }
-
-                row.style.display = visible ? '' : 'none';
+            const deleteModal = document.getElementById('confirmDeleteModal');
+            deleteModal.addEventListener('show.bs.modal', e => {
+                const id = e.relatedTarget.getAttribute('data-id');
+                document.getElementById('deleteForm').action = `/medicalrecords/delete/${id}`;
             });
-        }
 
-        /* =========================
-            SORTING
-        ========================== */
+            /* =========================
+                ELEMENT REFERENCES
+            ========================== */
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const tbody = rows[0]?.parentNode;
 
-        function sortTable() {
-            const visibleRows = rows.filter(r => r.style.display !== 'none');
+            const globalSearch = document.getElementById('globalSearch');
+            const filterType = document.getElementById('filterType');
+            const sortDate = document.getElementById('sortDate');
 
-            const sorters = {
-                'created-new': (a, b) => new Date(b.dataset.created) - new Date(a.dataset.created),
-                'created-old': (a, b) => new Date(a.dataset.created) - new Date(b.dataset.created),
-                'updated-new': (a, b) => new Date(b.dataset.updated) - new Date(a.dataset.updated),
-                'updated-old': (a, b) => new Date(a.dataset.updated) - new Date(b.dataset.updated)
+            const createdFrom = document.getElementById('createdFrom');
+            const createdTo = document.getElementById('createdTo');
+            const updatedFrom = document.getElementById('updatedFrom');
+            const updatedTo = document.getElementById('updatedTo');
+
+            const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+            /* =========================
+                PRESERVE ORIGINAL ROW ORDER
+            ========================== */
+            rows.forEach((row, index) => row.dataset.originalIndex = index);
+
+            /* =========================
+                HELPER FUNCTIONS
+            ========================== */
+            const inRange = (date, from, to) => {
+                if (!date) return true;
+                if (from && date < from) return false;
+                if (to && date > to) return false;
+                return true;
             };
 
-            if (sorters[sortDate.value]) {
-                visibleRows.sort(sorters[sortDate.value]);
-            } else {
-                visibleRows.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
+            /* =========================
+                FILTERING FUNCTION
+            ========================== */
+            function applyFilters() {
+                const searchQuery = globalSearch.value.toLowerCase().trim();
+                const typeFilter = filterType.value.toLowerCase();
+                const createdFromDate = createdFrom.value ? new Date(createdFrom.value + 'T00:00:00') : null;
+                const createdToDate = createdTo.value ? new Date(createdTo.value + 'T23:59:59') : null;
+                const updatedFromDate = updatedFrom.value ? new Date(updatedFrom.value + 'T00:00:00') : null;
+                const updatedToDate = updatedTo.value ? new Date(updatedTo.value + 'T23:59:59') : null;
+
+                rows.forEach(row => {
+                    let visible = true;
+
+                    const id = row.cells[0].textContent.toLowerCase();
+                    const petName = row.cells[1].textContent.toLowerCase();
+                    const type = row.cells[2].textContent.toLowerCase();
+                    const notesText = row.cells[6].textContent.trim();
+                    const notes = notesText === '-' ? '' : notesText.toLowerCase();
+
+                    const createdDate = row.dataset.created ? new Date(row.dataset.created) : null;
+                    const updatedDate = row.dataset.updated ? new Date(row.dataset.updated) : null;
+
+                    // Global search
+                    if (searchQuery && !(id.includes(searchQuery) || petName.includes(searchQuery) || type.includes(searchQuery) || notes.includes(searchQuery))) {
+                        visible = false;
+                    }
+
+                    // Type filter
+                    if (typeFilter && type !== typeFilter) visible = false;
+
+                    // Created date range
+                    if (!inRange(createdDate, createdFromDate, createdToDate)) visible = false;
+
+                    // Updated date range
+                    if (!inRange(updatedDate, updatedFromDate, updatedToDate)) visible = false;
+
+                    // Initial pet filter from Pets page
+                    if (initialPetId && row.dataset.petId?.trim() !== initialPetId) visible = false;
+
+                    row.style.display = visible ? '' : 'none';
+                });
             }
 
-            visibleRows.forEach(row => tbody.appendChild(row));
-        }
+            /* =========================
+                SORTING FUNCTION
+            ========================== */
+            function sortTable() {
+                const visibleRows = rows.filter(r => r.style.display !== 'none');
 
-        function updateTable() {
-            applyFilters();
-            sortTable();
-        }
+                const sorters = {
+                    'created-new': (a, b) => new Date(b.dataset.created) - new Date(a.dataset.created),
+                    'created-old': (a, b) => new Date(a.dataset.created) - new Date(b.dataset.created),
+                    'updated-new': (a, b) => new Date(b.dataset.updated) - new Date(a.dataset.updated),
+                    'updated-old': (a, b) => new Date(a.dataset.updated) - new Date(b.dataset.updated)
+                };
 
-        /* =========================
-            EVENT LISTENERS
-        ========================== */
-
-        [
-            globalSearch,
-            filterType,
-            sortDate,
-            createdFrom,
-            createdTo,
-            updatedFrom,
-            updatedTo
-        ].forEach(el => {
-            el.addEventListener('input', updateTable);
-            el.addEventListener('change', updateTable);
-        });
-
-        clearFiltersBtn.addEventListener('click', () => {
-            globalSearch.value = '';
-            filterType.value = '';
-            sortDate.value = '';
-            createdFrom.value = '';
-            createdTo.value = '';
-            updatedFrom.value = '';
-            updatedTo.value = '';
-            updateTable();
-        });
-
-        /* =========================
-            CSV EXPORT
-        ========================== */
-
-        document.getElementById('exportCsvBtn').addEventListener('click', () => {
-            const csv = [];
-            rows.forEach(r => {
-                if (r.style.display !== 'none') {
-                    csv.push([...r.cells].map(c => `"${c.textContent}"`).join(','));
+                if (sorters[sortDate.value]) {
+                    visibleRows.sort(sorters[sortDate.value]);
+                } else {
+                    visibleRows.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
                 }
+
+                visibleRows.forEach(row => tbody.appendChild(row));
+            }
+
+            /* =========================
+                UPDATE TABLE
+            ========================== */
+            function updateTable() {
+                applyFilters();
+                sortTable();
+            }
+
+            /* =========================
+                EVENT LISTENERS
+            ========================== */
+            [globalSearch, filterType, sortDate, createdFrom, createdTo, updatedFrom, updatedTo].forEach(el => {
+                el.addEventListener('input', updateTable);
+                el.addEventListener('change', updateTable);
             });
 
-            const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'medical_records.csv';
-            a.click();
+            // Clear filters button
+            clearFiltersBtn.addEventListener('click', () => {
+                globalSearch.value = '';
+                filterType.value = '';
+                sortDate.value = '';
+                createdFrom.value = '';
+                createdTo.value = '';
+                updatedFrom.value = '';
+                updatedTo.value = '';
+
+                // Reset initial pet filter
+                initialPetId = '';
+
+                // Remove pet_id from URL
+                const url = new URL(window.location);
+                url.searchParams.delete('pet_id');
+                url.searchParams.delete('pet_name');
+                history.replaceState({}, '', url);
+
+                // Show all rows and reset sorting
+                rows.forEach(r => r.style.display = '');
+                updateTable();
+            });
+
+            /* =========================
+                CSV EXPORT
+            ========================== */
+            document.getElementById('exportCsvBtn').addEventListener('click', () => {
+                const csv = [];
+                rows.forEach(r => {
+                    if (r.style.display !== 'none') {
+                        csv.push([...r.cells].map(c => `"${c.textContent}"`).join(','));
+                    }
+                });
+                const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'medical_records.csv';
+                a.click();
+            });
+
+            /* =========================
+                PRINT
+            ========================== */
+            document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+            // Apply filters initially
+            updateTable();
         });
-
-        /* =========================
-            PRINT
-        ========================== */
-
-        document.getElementById('printBtn').addEventListener('click', () => window.print());
-
-    });
     </script>
+
 
 </body>
 </html>
