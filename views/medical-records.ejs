@@ -56,10 +56,27 @@
                     <option value="Check-up">Check-up</option>
                     <option value="Other">Other</option>
                 </select>
+
+                <select id="sortDate" class="form-select form-select-sm">
+                    <option value="">Select</option>
+                    <option value="created-new">Created: Newest → Oldest</option>
+                    <option value="created-old">Created: Oldest → Newest</option>
+                    <option value="updated-new">Updated: Newest → Oldest</option>
+                    <option value="updated-old">Updated: Oldest → Newest</option>
+                </select>
+
                 <div class="date-range-filter">
-                    <input type="date" id="filterDateFrom" class="form-control form-control-sm">
+                    <label class="small fw-semibold">Created</label>
+                    <input type="date" id="createdFrom" class="form-control form-control-sm">
                     <span class="date-separator">to</span>
-                    <input type="date" id="filterDateTo" class="form-control form-control-sm">
+                    <input type="date" id="createdTo" class="form-control form-control-sm">
+                </div>
+
+                <div class="date-range-filter">
+                    <label class="small fw-semibold">Updated</label>
+                    <input type="date" id="updatedFrom" class="form-control form-control-sm">
+                    <span class="date-separator">to</span>
+                    <input type="date" id="updatedTo" class="form-control form-control-sm">
                 </div>
             </div>
 
@@ -87,7 +104,10 @@
                 </thead>
                 <tbody>
                 <% records.forEach(r => { %>
-                    <tr>
+                    <tr 
+                    data-created="<%= r.createdAt ? r.createdAt.toISOString() : '' %>"
+                    data-updated="<%= r.updatedAt ? r.updatedAt.toISOString() : '' %>"
+                    >
                         <td><%= r.record_id %></td>
                         <td><%= r.pet_name %></td>
                         <td><%= r.type %></td>
@@ -139,64 +159,172 @@
     <script>
     window.addEventListener('DOMContentLoaded', () => {
 
-        // Error modal
+        /* =========================
+            MODALS
+        ========================== */
+
         const errorModal = document.getElementById('errorModal');
         if (errorModal) new bootstrap.Modal(errorModal).show();
 
-        // Delete modal
         const deleteModal = document.getElementById('confirmDeleteModal');
         deleteModal.addEventListener('show.bs.modal', e => {
             const id = e.relatedTarget.getAttribute('data-id');
             document.getElementById('deleteForm').action = `/medicalrecords/delete/${id}`;
         });
 
-        // Filtering
-        const rows = document.querySelectorAll('tbody tr');
+        /* =========================
+            ELEMENT REFERENCES
+        ========================== */
+
+        const rows = Array.from(document.querySelectorAll('tbody tr'));
+        const tbody = rows[0]?.parentNode;
+
         const globalSearch = document.getElementById('globalSearch');
         const filterType = document.getElementById('filterType');
-        const filterDateFrom = document.getElementById('filterDateFrom');
-        const filterDateTo = document.getElementById('filterDateTo');
+        const sortDate = document.getElementById('sortDate');
+
+        const createdFrom = document.getElementById('createdFrom');
+        const createdTo = document.getElementById('createdTo');
+        const updatedFrom = document.getElementById('updatedFrom');
+        const updatedTo = document.getElementById('updatedTo');
+
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+        /* =========================
+            PRESERVE ORIGINAL ORDER
+        ========================== */
+
+        rows.forEach((row, index) => {
+            row.dataset.originalIndex = index;
+        });
+
+        /* =========================
+            HELPERS
+        ========================== */
+
+        function inRange(date, from, to) {
+            if (!date) return true;
+            if (from && date < from) return false;
+            if (to && date > to) return false;
+            return true;
+        }
+
+        /* =========================
+            FILTERING
+        ========================== */
 
         function applyFilters() {
             rows.forEach(row => {
                 const id = row.cells[0].textContent.toLowerCase();
                 const pet = row.cells[1].textContent.toLowerCase();
                 const type = row.cells[2].textContent.toLowerCase();
-                const notes = row.cells[5].textContent.toLowerCase();
-                const dateCell = row.cells[0].textContent; // optional if you store date in another cell
+                const notesText = row.cells[6].textContent.trim();
+                const notes = notesText === '-' ? '' : notesText.toLowerCase();
+
+                const createdDate = row.dataset.created ? new Date(row.dataset.created) : null;
+                const updatedDate = row.dataset.updated ? new Date(row.dataset.updated) : null;
 
                 let visible = true;
+
+                /* Global search */
                 const q = globalSearch.value.toLowerCase();
-
-                visible = visible && (id.includes(q) || pet.includes(q) || type.includes(q) || notes.includes(q));
-
-                if (filterPet.value) visible = visible && pet.includes(filterPet.value.toLowerCase());
-                if (filterType.value) visible = visible && type === filterType.value.toLowerCase();
-
-                if (filterDateFrom.value || filterDateTo.value) {
-                    const rowDate = new Date(dateCell); // adjust if you store actual date
-                    const fromDate = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
-                    const toDate = filterDateTo.value ? new Date(filterDateTo.value) : null;
-
-                    if (fromDate && rowDate < fromDate) visible = false;
-                    if (toDate && rowDate > toDate) visible = false;
+                if (q && !(id.includes(q) || pet.includes(q) || type.includes(q) || notes.includes(q))) {
+                    visible = false;
                 }
 
-                row.style.display = visible ? "" : "none";
+                /* Type filter */
+                if (filterType.value && type !== filterType.value.toLowerCase()) {
+                    visible = false;
+                }
+
+                /* Created date range */
+                const createdFromDate = createdFrom.value
+                    ? new Date(createdFrom.value + 'T00:00:00')
+                    : null;
+                const createdToDate = createdTo.value
+                    ? new Date(createdTo.value + 'T23:59:59')
+                    : null;
+
+                if (!inRange(createdDate, createdFromDate, createdToDate)) {
+                    visible = false;
+                }
+
+                /* Updated date range */
+                const updatedFromDate = updatedFrom.value
+                    ? new Date(updatedFrom.value + 'T00:00:00')
+                    : null;
+                const updatedToDate = updatedTo.value
+                    ? new Date(updatedTo.value + 'T23:59:59')
+                    : null;
+
+                if (!inRange(updatedDate, updatedFromDate, updatedToDate)) {
+                    visible = false;
+                }
+
+                row.style.display = visible ? '' : 'none';
             });
         }
 
-        [globalSearch, filterType, filterDateFrom, filterDateTo].forEach(el => {
-            el.addEventListener('input', applyFilters);
-            el.addEventListener('change', applyFilters);
-        });
+        /* =========================
+            SORTING
+        ========================== */
 
-        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-            [globalSearch, filterPet, filterType, filterDateFrom, filterDateTo].forEach(el => el.value = '');
+        function sortTable() {
+            const visibleRows = rows.filter(r => r.style.display !== 'none');
+
+            const sorters = {
+                'created-new': (a, b) => new Date(b.dataset.created) - new Date(a.dataset.created),
+                'created-old': (a, b) => new Date(a.dataset.created) - new Date(b.dataset.created),
+                'updated-new': (a, b) => new Date(b.dataset.updated) - new Date(a.dataset.updated),
+                'updated-old': (a, b) => new Date(a.dataset.updated) - new Date(b.dataset.updated)
+            };
+
+            if (sorters[sortDate.value]) {
+                visibleRows.sort(sorters[sortDate.value]);
+            } else {
+                visibleRows.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
+            }
+
+            visibleRows.forEach(row => tbody.appendChild(row));
+        }
+
+        function updateTable() {
             applyFilters();
+            sortTable();
+        }
+
+        /* =========================
+            EVENT LISTENERS
+        ========================== */
+
+        [
+            globalSearch,
+            filterType,
+            sortDate,
+            createdFrom,
+            createdTo,
+            updatedFrom,
+            updatedTo
+        ].forEach(el => {
+            el.addEventListener('input', updateTable);
+            el.addEventListener('change', updateTable);
         });
 
-        // Export CSV
+        clearFiltersBtn.addEventListener('click', () => {
+            globalSearch.value = '';
+            filterType.value = '';
+            sortDate.value = '';
+            createdFrom.value = '';
+            createdTo.value = '';
+            updatedFrom.value = '';
+            updatedTo.value = '';
+            updateTable();
+        });
+
+        /* =========================
+            CSV EXPORT
+        ========================== */
+
         document.getElementById('exportCsvBtn').addEventListener('click', () => {
             const csv = [];
             rows.forEach(r => {
@@ -204,6 +332,7 @@
                     csv.push([...r.cells].map(c => `"${c.textContent}"`).join(','));
                 }
             });
+
             const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -211,10 +340,14 @@
             a.click();
         });
 
-        // Print
+        /* =========================
+            PRINT
+        ========================== */
+
         document.getElementById('printBtn').addEventListener('click', () => window.print());
 
     });
     </script>
+
 </body>
 </html>

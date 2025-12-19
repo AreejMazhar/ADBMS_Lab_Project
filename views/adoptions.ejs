@@ -143,106 +143,94 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', () => {
 
-        // Error modal
-        const errorModal = document.getElementById('errorModal');
-        if (errorModal) new bootstrap.Modal(errorModal).show();
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const tbody = rows[0]?.parentNode;
 
-        // Delete modal
-        const deleteModal = document.getElementById('confirmDeleteModal');
-        deleteModal.addEventListener('show.bs.modal', e => {
-            const id = e.relatedTarget.getAttribute('data-id');
-            document.getElementById('deleteForm').action = `/adoptions/delete/${id}`;
-        });
+            const globalSearch = document.getElementById('globalSearch');
+            const filterDateFrom = document.getElementById('filterDateFrom');
+            const filterDateTo = document.getElementById('filterDateTo');
+            const filterComments = document.getElementById('filterComments');
+            const sortDate = document.getElementById('sortDate');
+            const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
-        const rows = document.querySelectorAll('tbody tr');
-        const globalSearch = document.getElementById('globalSearch');
-        const filterDateFrom = document.getElementById('filterDateFrom');
-        const filterDateTo = document.getElementById('filterDateTo');
-        const filterComments = document.getElementById('filterComments');
-        const sortDate = document.getElementById('sortDate');
-        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-
-        function applyFilters() {
-            const rowsArray = Array.from(rows);
-
-            rowsArray.forEach(row => {
-                const id = row.cells[0].textContent.toLowerCase();
-                const pet = row.cells[1].textContent.toLowerCase();
-                const adopter = row.cells[2].textContent.toLowerCase();
-                const date = new Date(row.dataset.date);
-                const comments = row.cells[4].textContent.trim().toLowerCase();
-
-                let visible = true;
-
-                // Global search
-                const q = globalSearch.value.toLowerCase();
-                visible = visible && (id.includes(q) || pet.includes(q) || adopter.includes(q) || comments.includes(q));
-
-                // Date filter
-                const fromDate = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
-                const toDate = filterDateTo.value ? new Date(filterDateTo.value) : null;
-                if (fromDate && date < fromDate) visible = false;
-                if (toDate && date > toDate) visible = false;
-
-                // Comments filter
-                if (filterComments.value === 'has' && (!comments || comments === '-')) visible = false;
-                if (filterComments.value === 'none' && comments && comments !== '-') visible = false;
-
-                row.style.display = visible ? "" : "none";
+            // Store original order
+            rows.forEach((row, index) => {
+                row.dataset.originalIndex = index;
             });
+
+            function applyFilters() {
+                rows.forEach(row => {
+                    const id = row.cells[0].textContent.toLowerCase();
+                    const pet = row.cells[1].textContent.toLowerCase();
+                    const adopter = row.cells[2].textContent.toLowerCase();
+                    const commentsText = row.cells[4].textContent.trim();
+                    const comments = commentsText === '-' ? '' : commentsText.toLowerCase();
+                    const rowDate = new Date(row.dataset.date);
+
+                    let visible = true;
+
+                    // Global search
+                    const q = globalSearch.value.toLowerCase();
+                    if (q && !(id.includes(q) || pet.includes(q) || adopter.includes(q) || comments.includes(q))) {
+                        visible = false;
+                    }
+
+                    // Date range
+                    if (filterDateFrom.value) {
+                        const from = new Date(filterDateFrom.value + 'T00:00:00');
+                        if (rowDate < from) visible = false;
+                    }
+
+                    if (filterDateTo.value) {
+                        const to = new Date(filterDateTo.value + 'T23:59:59');
+                        if (rowDate > to) visible = false;
+                    }
+
+                    // Comments filter
+                    if (filterComments.value === 'has' && !comments) visible = false;
+                    if (filterComments.value === 'none' && comments) visible = false;
+
+                    row.style.display = visible ? '' : 'none';
+                });
+            }
 
             function sortTable() {
-                const tbody = rows[0].parentNode;
-                const rowsArray = Array.from(rows);
+                const visibleRows = rows.filter(r => r.style.display !== 'none');
 
                 if (sortDate.value === 'newest') {
-                    rowsArray.sort((a, b) => new Date(b.dataset.date) - new Date(a.dataset.date));
+                    visibleRows.sort((a, b) => new Date(b.dataset.date) - new Date(a.dataset.date));
                 } else if (sortDate.value === 'oldest') {
-                    rowsArray.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
+                    visibleRows.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
                 } else {
-                    // No sorting → return to original order
-                    rowsArray.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
+                    visibleRows.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
                 }
 
-                rowsArray.forEach(r => tbody.appendChild(r));
+                visibleRows.forEach(r => tbody.appendChild(r));
             }
-        }
 
-        [globalSearch, filterDateFrom, filterDateTo, filterComments, sortDate].forEach(el => {
-            el.addEventListener('input', applyFilters);
-            el.addEventListener('change', applyFilters);
-            sortTable();
-        });
+            function updateTable() {
+                applyFilters();
+                sortTable();
+            }
 
-        clearFiltersBtn.addEventListener('click', () => {
-            globalSearch.value = '';
-            filterDateFrom.value = '';
-            filterDateTo.value = '';
-            filterComments.value = 'all';
-            sortDate.value = 'newest';
-            applyFilters();
-        });
+            [globalSearch, filterDateFrom, filterDateTo, filterComments, sortDate]
+                .forEach(el => {
+                    el.addEventListener('input', updateTable);
+                    el.addEventListener('change', updateTable);
+                });
 
-        // Export CSV
-        document.getElementById('exportCsvBtn').addEventListener('click', () => {
-            const csv = [];
-            rows.forEach(r => {
-                if (r.style.display !== 'none') {
-                    csv.push([...r.cells].map(c => `"${c.textContent}"`).join(','));
-                }
+            clearFiltersBtn.addEventListener('click', () => {
+                globalSearch.value = '';
+                filterDateFrom.value = '';
+                filterDateTo.value = '';
+                filterComments.value = 'all';
+                sortDate.value = '';
+                updateTable();
             });
-            const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'adoptions.csv';
-            a.click();
-        });
 
-        // Print
-        document.getElementById('printBtn').addEventListener('click', () => window.print());
-    });
+        });
     </script>
 
 </body>
