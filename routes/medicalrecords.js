@@ -1,30 +1,31 @@
 const express = require('express');
-const router = express.Router();
-const MedicalRecord = require('../models/MedicalRecord');
-const Pet = require('../models/Pet');
+const router = express.Router(); // Create a router instance for this module
+const MedicalRecord = require('../models/MedicalRecord'); // Import MedicalRecord model
+const Pet = require('../models/Pet'); // Import Pet model to link records to pets
 
 // Helper: generate next Medical Record ID (MR001, MR002...)
 async function getNextRecordId() {
-    const lastRecord = await MedicalRecord.findOne().sort({ record_id: -1 });
-    if (!lastRecord) return "MR001";
-    const num = parseInt(lastRecord.record_id.slice(2)) + 1;
-    return `MR${num.toString().padStart(3, "0")}`;
+    const lastRecord = await MedicalRecord.findOne().sort({ record_id: -1 }); // Find last record by ID
+    if (!lastRecord) return "MR001"; // If none exist, start with MR001
+    const num = parseInt(lastRecord.record_id.slice(2)) + 1; // Extract number part and increment
+    return `MR${num.toString().padStart(3, "0")}`; // Format with leading zeros
 }
 
 // List all medical records (with optional pet filter)
 router.get('/', async (req, res) => {
-    const petId = req.query.pet_id || null;
+    const petId = req.query.pet_id || null; // Get pet filter from query string if present
 
-    const query = petId ? { pet_id: petId } : {};
-    const records = await MedicalRecord.find(query).lean();
+    const query = petId ? { pet_id: petId } : {}; // Build query object
+    const records = await MedicalRecord.find(query).lean(); // Fetch records from DB as plain JS objects
 
+    // Populate pet names for each record
     const populated = await Promise.all(records.map(async rec => {
-        const pet = await Pet.findOne({ pet_id: rec.pet_id });
+        const pet = await Pet.findOne({ pet_id: rec.pet_id }); // Get pet info
         return {
             _id: rec._id,
             record_id: rec.record_id,
             pet_id: rec.pet_id, 
-            pet_name: pet ? pet.name : "-",
+            pet_name: pet ? pet.name : "-", // Display pet name or "-" if not found
             type: rec.type,
             vaccination_name: rec.vaccination_name || "-",
             diagnosis: rec.diagnosis || "-",
@@ -35,6 +36,7 @@ router.get('/', async (req, res) => {
         };
     }));
 
+    // Render medical-records view with populated data
     res.render('medical-records', {
         page: 'medicalrecords',
         records: populated,
@@ -45,11 +47,11 @@ router.get('/', async (req, res) => {
 
 // Show Add Medical Record Form
 router.get('/add', async (req, res) => {
-    const pets = await Pet.find().lean();
-    const nextId = await getNextRecordId();
+    const pets = await Pet.find().lean(); // Get all pets to select from
+    const nextId = await getNextRecordId(); // Generate next record ID
 
     res.render('medical-record-form', { 
-        record: null, 
+        record: null, // No existing record (adding new)
         pets, 
         nextId,
         page: 'medicalrecords' 
@@ -59,6 +61,8 @@ router.get('/add', async (req, res) => {
 // Handle Add POST
 router.post('/add', async (req, res) => {
     const { record_id, pet_id, type, vaccination_name, diagnosis, treatment, notes } = req.body;
+
+    // Create a new medical record in DB
     await MedicalRecord.create({
         record_id,
         pet_id,
@@ -68,16 +72,17 @@ router.post('/add', async (req, res) => {
         treatment: treatment || "",
         notes: notes || ""
     });
-    res.redirect('/medicalrecords');
+
+    res.redirect('/medicalrecords'); // Redirect to list page
 });
 
 // Show Edit Medical Record Form
 router.get('/edit/:id', async (req, res) => {
-    const record = await MedicalRecord.findById(req.params.id).lean();
-    const pets = await Pet.find().lean();
+    const record = await MedicalRecord.findById(req.params.id).lean(); // Find record by ID
+    const pets = await Pet.find().lean(); // Get all pets for selection
 
     res.render('medical-record-form', { 
-        record, 
+        record, // Pass existing record to pre-fill form
         pets,
         page: 'medicalrecords' 
     });
@@ -86,6 +91,8 @@ router.get('/edit/:id', async (req, res) => {
 // Handle Edit POST
 router.post('/edit/:id', async (req, res) => {
     const { pet_id, type, vaccination_name, diagnosis, treatment, notes } = req.body;
+
+    // Update existing record in DB
     await MedicalRecord.findByIdAndUpdate(req.params.id, {
         pet_id,
         type,
@@ -94,13 +101,14 @@ router.post('/edit/:id', async (req, res) => {
         treatment: treatment || "",
         notes: notes || ""
     });
-    res.redirect('/medicalrecords');
+
+    res.redirect('/medicalrecords'); // Redirect to list page
 });
 
 // Delete Medical Record
 router.post('/delete/:id', async (req, res) => {
-    await MedicalRecord.findByIdAndDelete(req.params.id);
-    res.redirect('/medicalrecords');
+    await MedicalRecord.findByIdAndDelete(req.params.id); // Remove record by ID
+    res.redirect('/medicalrecords'); // Redirect to list page
 });
 
-module.exports = router;
+module.exports = router; // Export router for use in server.js
