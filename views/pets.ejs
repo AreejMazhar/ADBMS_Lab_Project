@@ -121,7 +121,8 @@
                         <td><%= pet.name %></td>
                         <td><%= pet.species || "-" %></td>
                         <td><%= pet.breed || "-" %></td>
-                        <td data-age="<%= pet.age %>"><%= formatAge(pet.age) %></td>
+                        <td data-age="<%= Math.max(0, pet.age) %>"><%= formatAge(pet.age) %></td>
+                        <td><%= pet.microchip?.trim() || "-" %></td>
                         <td><%= pet.available ? "Yes" : "No" %></td>
                         <td>
                             <a href="/medicalrecords?pet_id=<%= pet.pet_id %>&pet_name=<%= encodeURIComponent(pet.name) %>" class="btn btn-sm btn-primary">

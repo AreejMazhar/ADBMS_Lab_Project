@@ -36,6 +36,7 @@ const petSchema = new mongoose.Schema({
     microchip: { 
         type: String,
         unique: true, 
+        sparse: true, // allows multiple pets without microchip
         match: /^$|^MC-\d{9}$/
     }
 });

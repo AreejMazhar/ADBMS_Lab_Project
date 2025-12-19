@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Pet = require('../models/Pet');
+const Adoption = require('../models/AdoptionRecord');
 
 // Helper: generate next Pet ID (P001, P002...)
 async function getNextPetId() {
@@ -14,7 +15,6 @@ async function getNextPetId() {
 router.get('/', async (req, res) => {
     const pets = await Pet.find();
 
-    // Create unique species list for filter safely
     const speciesList = pets.length
         ? [...new Set(pets.map(p => p.species).filter(Boolean))].sort()
         : [];
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
         speciesList,
         error: req.query.error || null,
         formatAge: function(months) {
-            if (months == null) return "-";
+            if (months == null || months < 0) return "-";
             const years = Math.floor(months / 12);
             const remainingMonths = months % 12;
 
@@ -56,9 +56,16 @@ router.post('/add', async (req, res) => {
     try {
         const { pet_id, name, species, breed, age, available, microchip } = req.body;
 
-        // Check if microchip already exists (only if provided)
-        if (microchip) {
-            const existing = await Pet.findOne({ microchip });
+        // Age validation
+        const parsedAge = parseInt(age, 10);
+        if (isNaN(parsedAge) || parsedAge < 0) {
+            return res.redirect(`/pets/add?error=${encodeURIComponent('Age cannot be negative')}`);
+        }
+
+        // Microchip uniqueness if provided
+        const trimmedChip = microchip?.trim();
+        if (trimmedChip) {
+            const existing = await Pet.findOne({ microchip: trimmedChip });
             if (existing) {
                 return res.redirect(`/pets/add?error=${encodeURIComponent('Microchip already exists')}`);
             }
@@ -69,9 +76,9 @@ router.post('/add', async (req, res) => {
             name,
             species,
             breed,
-            age,
+            age: parsedAge,
             available: available === 'on',
-            microchip: microchip || ""
+            microchip: trimmedChip || ""
         });
 
         res.redirect('/pets');
@@ -94,7 +101,6 @@ router.get('/edit/:id', async (req, res) => {
     });
 });
 
-
 // Handle Edit Pet POST
 router.post('/edit/:id', async (req, res) => {
     try {
@@ -104,9 +110,16 @@ router.post('/edit/:id', async (req, res) => {
         const pet = await Pet.findById(petId);
         const hasAdoptions = await Adoption.exists({ pet_id: pet.pet_id });
 
-        // Check microchip uniqueness if provided, excluding current pet
-        if (microchip) {
-            const existing = await Pet.findOne({ microchip, _id: { $ne: petId } });
+        // Age validation
+        const parsedAge = parseInt(age, 10);
+        if (isNaN(parsedAge) || parsedAge < 0) {
+            return res.redirect(`/pets/edit/${petId}?error=${encodeURIComponent('Age cannot be negative')}`);
+        }
+
+        // Microchip uniqueness if provided
+        const trimmedChip = microchip?.trim();
+        if (trimmedChip) {
+            const existing = await Pet.findOne({ microchip: trimmedChip, _id: { $ne: petId } });
             if (existing) {
                 return res.redirect(`/pets/edit/${petId}?error=${encodeURIComponent('Microchip already exists')}`);
             }
@@ -116,13 +129,12 @@ router.post('/edit/:id', async (req, res) => {
             name,
             species,
             breed,
-            age,
-            microchip: microchip || "",
+            age: parsedAge,
+            microchip: trimmedChip || "",
             available: hasAdoptions ? false : (available === 'on')
         };
 
         await Pet.findByIdAndUpdate(petId, updatedData);
-
         res.redirect('/pets');
     } catch (err) {
         console.error(err);
@@ -131,15 +143,11 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 // Delete Pet
-const Adoption = require('../models/AdoptionRecord');
-
 router.post('/delete/:id', async (req, res) => {
     const pet = await Pet.findById(req.params.id);
     if (!pet) return res.redirect('/pets');
 
-    // Check if pet is used in any adoption
     const hasAdoptions = await Adoption.findOne({ pet_id: pet.pet_id });
-
     if (hasAdoptions) {
         return res.redirect(`/pets?error=${encodeURIComponent('Pet has adoption records and cannot be deleted')}`);
     }

@@ -74,8 +74,7 @@
             <div class="mb-3">
                 <label for="age" class="form-label">Age (in months)</label>
                 <div class="form-text">Enter age in months. Example: 18 months = 1 year and 6 months.</div>
-                <input type="number" name="age" id="age" class="form-control"
-                    value="<%= pet ? pet.age : '' %>" min="0" required>
+                <input type="number" name="age" id="age" class="form-control" value="<%= pet ? pet.age : '' %>" min="0" required>
             </div>
 
             <div class="mb-3 form-check">
@@ -99,7 +98,8 @@
                     id="microchip" 
                     class="form-control"
                     value="<%= pet ? pet.microchip : '' %>"
-                    pattern="^$|^MC-\d{9}$">
+                    pattern="^$|^MC-\d{9}$"
+                    title="Must be empty or in format MC-123456789">
             </div>
 
             <% if (pet) { %>
