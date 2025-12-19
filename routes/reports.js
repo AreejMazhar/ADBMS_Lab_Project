@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
     ]);
 
     const speciesList = await Pet.distinct("species");
-    const selectedSpecies = req.query.species || speciesList[0];
+    const selectedSpecies = req.query.species || "All";
 
     /* =====================
        Monthly Adoptions
@@ -72,12 +72,13 @@ router.get('/', async (req, res) => {
     const ageGroupDataRaw = await Adoption.aggregate([
       { $lookup: { from: "pets", localField: "pet_id", foreignField: "pet_id", as: "pet" } },
       { $unwind: "$pet" },
+      { $match: { "pet.age": { $gte: 0 } } },  // only include pets with valid age
       {
         $addFields: {
           ageGroup: {
             $switch: {
               branches: [
-                { case: { $lte: ["$pet.age", 24] }, then: "Young" },  // 0–24 months
+                { case: { $lte: ["$pet.age", 24] }, then: "Young" },        // 0–24 months
                 { case: { $and: [{ $gt: ["$pet.age", 24] }, { $lte: ["$pet.age", 84] }] }, then: "Adult" } // 25–84 months
               ],
               default: "Senior"  // 85+ months
@@ -94,8 +95,12 @@ router.get('/', async (req, res) => {
       { $sort: { sortOrder: 1 } }
     ]);
 
-    const ageGroupLabels = ageGroupDataRaw.map(a => a._id);
-    const ageGroupCounts = ageGroupDataRaw.map(a => a.count);
+    // Ensure all age groups appear even if zero
+    const ageGroupLabels = ["Young", "Adult", "Senior"];
+    const ageGroupCounts = ageGroupLabels.map(g =>
+      ageGroupDataRaw.find(a => a._id === g)?.count || 0
+    );
+
 
     /* =====================
        Vaccination Coverage
@@ -124,39 +129,40 @@ router.get('/', async (req, res) => {
        Breed Popularity Chart
     ====================== */
     const breedBySpeciesRaw = await Adoption.aggregate([
-        {
-            $lookup: {
-            from: "pets",
-            localField: "pet_id",
-            foreignField: "pet_id",
-            as: "pet"
-            }
+    {
+      $lookup: {
+        from: "pets",
+        localField: "pet_id",
+        foreignField: "pet_id",
+        as: "pet"
+      }
+    },
+    { $unwind: "$pet" },
+    {
+      $group: {
+        _id: {
+          species: "$pet.species",
+          breed: "$pet.breed"
         },
-        { $unwind: "$pet" },
-        {
-            $group: {
-            _id: {
-                species: "$pet.species",
-                breed: "$pet.breed"
-            },
-            count: { $sum: 1 }
-            }
-        },
-        {
-            $group: {
-            _id: "$_id.species",
-            breeds: {
-                $push: {
-                breed: "$_id.breed",
-                count: "$count"
-                }
-            }
-            }
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $group: {
+        _id: "$_id.species",
+        breeds: {
+          $push: {
+            breed: "$_id.breed",
+            count: "$count"
+          }
         }
-        ]);
+      }
+    }
+  ]);
 
-    const breedBySpecies = {};
-    breedBySpeciesRaw.forEach(s => {breedBySpecies[s._id] = s.breeds;});
+const breedBySpecies = {};
+breedBySpeciesRaw.forEach(s => { breedBySpecies[s._id] = s.breeds; });
+
 
     res.render('reports', {
         page: 'reports',
