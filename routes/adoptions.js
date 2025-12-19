@@ -1,20 +1,28 @@
+// Import Express to create routes
 const express = require('express');
+// Create a router object
 const router = express.Router();
+
+// Import models for CRUD operations
 const Adoption = require('../models/AdoptionRecord');
 const Pet = require('../models/Pet');
 const Adopter = require('../models/Adopter');
 
-// Helper: generate next Record ID (R001, R002...)
+// Helper: generate next adoption record ID (R001, R002...)
 async function getNextRecordId() {
+    // Find the last adoption record, sorted by record_id descending
     const lastRecord = await Adoption.findOne().sort({ record_id: -1 });
-    if (!lastRecord) return "R001";
+    if (!lastRecord) return "R001"; // Start from R001 if no record exists
+    // Increment numeric part and pad with zeros
     const num = parseInt(lastRecord.record_id.slice(1)) + 1;
     return `R${num.toString().padStart(3, "0")}`;
 }
 
-// List all adoptions
+// Route: List all adoptions
 router.get('/', async (req, res) => {
     const adoptions = await Adoption.find();
+
+    // Populate pet_name and adopter_name for display
     const populated = await Promise.all(adoptions.map(async record => {
         const pet = await Pet.findOne({ pet_id: record.pet_id });
         const adopter = await Adopter.findOne({ adopter_id: record.adopter_id });
@@ -27,6 +35,7 @@ router.get('/', async (req, res) => {
             comments: record.comments || "-"
         };
     }));
+
     res.render('adoptions', {
         page: 'adoptions',
         adoptions: populated,
@@ -34,13 +43,13 @@ router.get('/', async (req, res) => {
     });
 });
 
-// Show Add Adoption Form
+// Route: Show Add Adoption Form
 router.get('/add', async (req, res) => {
-    const pets = await Pet.find({ available: true }).lean();
+    const pets = await Pet.find({ available: true }).lean(); // Only available pets
     const adopters = await Adopter.find().lean();
     const nextId = await getNextRecordId();
 
-    // No available pets → render the adoption page with error modal
+    // If no available pets, show adoptions list with error
     if (pets.length === 0) {
         const adoptions = await Adoption.find();
         const populated = await Promise.all(adoptions.map(async record => {
@@ -63,18 +72,18 @@ router.get('/add', async (req, res) => {
         });
     }
 
-    // Normal case → show add form
+    // Normal case: show add form
     res.render('adoption-form', { page: 'adoptions', adoption: null, pets, adopters, nextId });
 });
 
-// Handle Add Adoption POST
+// Route: Handle Add Adoption POST
 router.post('/add', async (req, res) => {
     const { record_id, pet_id, adopter_id, adoption_date, comments } = req.body;
 
     // Mark selected pet as unavailable
     await Pet.findOneAndUpdate({ pet_id }, { available: false });
 
-    // Create adoption record
+    // Create new adoption record
     await Adoption.create({
         record_id,
         pet_id,
@@ -92,45 +101,44 @@ router.post('/add', async (req, res) => {
     res.redirect('/adoptions');
 });
 
-// Show Edit Adoption Form
+// Route: Show Edit Adoption Form
 router.get('/edit/:id', async (req, res) => {
     const adoption = await Adoption.findById(req.params.id);
 
-    // Fetch available pets and the current pet (to keep it selectable)
+    // Fetch available pets plus current pet (even if unavailable)
     const availablePets = await Pet.find({ available: true }).lean();
     const currentPet = await Pet.find({ pet_id: adoption.pet_id }).lean();
     const pets = [...availablePets, ...currentPet.filter(p => !availablePets.some(ap => ap.pet_id === p.pet_id))];
 
     const adopters = await Adopter.find().lean();
+
     res.render('adoption-form', { page: 'adoptions', adoption, pets, adopters, nextId: null });
 });
 
-// Handle Edit Adoption POST
+// Route: Handle Edit Adoption POST
 router.post('/edit/:id', async (req, res) => {
     const { pet_id, adopter_id, adoption_date, comments } = req.body;
     const adoption = await Adoption.findById(req.params.id);
 
-    // Update pet availability if changed
+    // Update pet availability if pet changed
     if (adoption.pet_id !== pet_id) {
-        await Pet.findOneAndUpdate({ pet_id: adoption.pet_id }, { available: true });
-        await Pet.findOneAndUpdate({ pet_id }, { available: false });
+        await Pet.findOneAndUpdate({ pet_id: adoption.pet_id }, { available: true }); // old pet available
+        await Pet.findOneAndUpdate({ pet_id }, { available: false }); // new pet unavailable
     }
 
-    // Update adopter counts if changed
+    // Update adopter counts if adopter changed
     if (adoption.adopter_id !== adopter_id) {
-        // Decrement old adopter
         await Adopter.findOneAndUpdate(
             { adopter_id: adoption.adopter_id },
-            { $inc: { adopted_pet_count: -1 } }
+            { $inc: { adopted_pet_count: -1 } } // decrement old adopter
         );
-        // Increment new adopter
         await Adopter.findOneAndUpdate(
             { adopter_id },
-            { $inc: { adopted_pet_count: 1 } }
+            { $inc: { adopted_pet_count: 1 } } // increment new adopter
         );
     }
 
-    // Update adoption record
+    // Update adoption record in database
     await Adoption.findByIdAndUpdate(req.params.id, {
         pet_id,
         adopter_id,
@@ -141,11 +149,11 @@ router.post('/edit/:id', async (req, res) => {
     res.redirect('/adoptions');
 });
 
-// Delete Adoption
+// Route: Delete Adoption
 router.post('/delete/:id', async (req, res) => {
     const adoption = await Adoption.findById(req.params.id);
     if (adoption) {
-        // Make the pet available again
+        // Make pet available again
         await Pet.findOneAndUpdate({ pet_id: adoption.pet_id }, { available: true });
         // Decrement adopter's adopted_pet_count
         await Adopter.findOneAndUpdate(
@@ -153,8 +161,10 @@ router.post('/delete/:id', async (req, res) => {
             { $inc: { adopted_pet_count: -1 } }
         );
     }
+    // Delete adoption record
     await Adoption.findByIdAndDelete(req.params.id);
     res.redirect('/adoptions');
 });
 
+// Export router to use in server.js
 module.exports = router;
