@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
         error: req.query.error || null,
         selectedPetId: req.query.pet_id || null
     });
-});
+})
 
 // Show Add Medical Record Form
 router.get('/add', async (req, res) => {
@@ -99,6 +99,9 @@ router.post('/edit/:id', async (req, res) => {
 
 // Delete Medical Record
 router.post('/delete/:id', async (req, res) => {
+    const medrecord = await MedicalRecord.findById(req.params.id);
+    if (!medrecord) return res.redirect('/medicalrecords');
+
     await MedicalRecord.findByIdAndDelete(req.params.id);
     res.redirect('/medicalrecords');
 });
