@@ -107,8 +107,8 @@ router.post('/edit/:id', async (req, res) => {
 
 // Delete Medical Record
 router.post('/delete/:id', async (req, res) => {
-    const medrecord = await MedicalRecord.findById(req.params.id);
-    if (!medrecord) return res.redirect('/medicalrecords');
+    const medrecord = await MedicalRecord.findById(req.params.id); // Find medical record by MongoDB _id
+    if (!medrecord) return res.redirect('/medicalrecords'); // Redirect if not found
 
     await MedicalRecord.findByIdAndDelete(req.params.id); // Remove record by ID
     res.redirect('/medicalrecords'); // Redirect to list page
