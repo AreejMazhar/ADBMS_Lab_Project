@@ -83,7 +83,7 @@ router.post('/add', async (req, res) => {
     // Mark selected pet as unavailable
     await Pet.findOneAndUpdate({ pet_id }, { available: false });
 
-    // Create new adoption record
+    // Create new adoption record (.create is equivalent to .insertOne in MongoDB)
     await Adoption.create({
         record_id,
         pet_id,

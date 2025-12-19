@@ -87,7 +87,7 @@ router.post('/add', async (req, res) => {
             }
         }
 
-        // Create a new pet document in MongoDB
+        // Create a new pet document in MongoDB (.create is equivalent to .insertOne in MongoDB)
         await Pet.create({
             pet_id,
             name,
@@ -146,18 +146,15 @@ router.post('/edit/:id', async (req, res) => {
             }
         }
 
-        // Prepare updated pet data
-        const updatedData = {
+        // Update pet document in MongoDB
+        await Pet.findByIdAndUpdate(petId, {
             name,
             species,
             breed,
             age: parsedAge,
             microchip: trimmedChip || "",
             available: hasAdoptions ? false : (available === 'on')  // Prevent unavailability if adopted
-        };
-
-        // Update pet document in MongoDB
-        await Pet.findByIdAndUpdate(petId, updatedData);
+        });
 
         // Redirect to pet list after successful update
         res.redirect('/pets');

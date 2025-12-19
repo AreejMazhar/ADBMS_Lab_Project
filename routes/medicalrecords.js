@@ -62,7 +62,7 @@ router.get('/add', async (req, res) => {
 router.post('/add', async (req, res) => {
     const { record_id, pet_id, type, vaccination_name, diagnosis, treatment, notes } = req.body;
 
-    // Create a new medical record in DB
+    // Create a new medical record in DB (.create is equivalent to .insertOne in MongoDB)
     await MedicalRecord.create({
         record_id,
         pet_id,

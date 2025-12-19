@@ -61,7 +61,7 @@ router.post('/add', async (req, res) => {
             }
         }
 
-        // Create new adopter document in MongoDB
+        // Create new adopter document in MongoDB (.create is equivalent to .insertOne in MongoDB)
         await Adopter.create({
             adopter_id,
             name,
