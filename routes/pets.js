@@ -69,17 +69,21 @@ router.get('/add', async (req, res) => {
 // Route: Handle Add Pet Form Submission
 router.post('/add', async (req, res) => {
     try {
-        // Extract form input values from req.body
         const { pet_id, name, species, breed, age, available, microchip } = req.body;
 
-        // Validate age: must be a non-negative number
+        // Validate age
         const parsedAge = parseInt(age, 10);
         if (isNaN(parsedAge) || parsedAge < 0) {
             return res.redirect(`/pets/add?error=${encodeURIComponent('Age cannot be negative')}`);
         }
 
-        // Trim microchip input and check uniqueness if provided
+        // Validate microchip format 
         const trimmedChip = microchip?.trim();
+        if (trimmedChip && !/^MC-\d{9}$/.test(trimmedChip)) {
+            return res.redirect(`/pets/add?error=${encodeURIComponent('Microchip must be empty or in format MC-123456789')}`);
+        }
+
+        //  Check uniqueness 
         if (trimmedChip) {
             const existing = await Pet.findOne({ microchip: trimmedChip });
             if (existing) {
@@ -87,21 +91,20 @@ router.post('/add', async (req, res) => {
             }
         }
 
-        // Create a new pet document in MongoDB (.create is equivalent to .insertOne in MongoDB)
+        // Create new pet 
         await Pet.create({
             pet_id,
             name,
             species,
             breed,
             age: parsedAge,
-            available: available === 'on',  // Convert checkbox to boolean
-            microchip: trimmedChip || ""     // Store empty string if no microchip
+            available: available === 'on',
+            microchip: trimmedChip || ""
         });
 
-        // Redirect to pet list after successful creation
         res.redirect('/pets');
     } catch (err) {
-        console.error(err);  // Log errors for debugging
+        console.error(err);
         res.redirect(`/pets/add?error=${encodeURIComponent('Something went wrong')}`);
     }
 });
@@ -126,9 +129,11 @@ router.get('/edit/:id', async (req, res) => {
 router.post('/edit/:id', async (req, res) => {
     try {
         const { name, species, breed, age, available, microchip } = req.body;
-        const petId = req.params.id;  // Get the pet's MongoDB _id
+        const petId = req.params.id;
 
         const pet = await Pet.findById(petId);
+        if (!pet) return res.redirect('/pets');
+
         const hasAdoptions = await Adoption.exists({ pet_id: pet.pet_id });
 
         // Validate age
@@ -137,8 +142,13 @@ router.post('/edit/:id', async (req, res) => {
             return res.redirect(`/pets/edit/${petId}?error=${encodeURIComponent('Age cannot be negative')}`);
         }
 
-        // Check microchip uniqueness, ignoring current pet
+        // Validate microchip format
         const trimmedChip = microchip?.trim();
+        if (trimmedChip && !/^MC-\d{9}$/.test(trimmedChip)) {
+            return res.redirect(`/pets/edit/${petId}?error=${encodeURIComponent('Microchip must be empty or in format MC-123456789')}`);
+        }
+
+        // Check uniqueness
         if (trimmedChip) {
             const existing = await Pet.findOne({ microchip: trimmedChip, _id: { $ne: petId } });
             if (existing) {
@@ -146,17 +156,16 @@ router.post('/edit/:id', async (req, res) => {
             }
         }
 
-        // Update pet document in MongoDB
+        // Update pet
         await Pet.findByIdAndUpdate(petId, {
             name,
             species,
             breed,
             age: parsedAge,
             microchip: trimmedChip || "",
-            available: hasAdoptions ? false : (available === 'on')  // Prevent unavailability if adopted
+            available: hasAdoptions ? false : (available === 'on')
         });
 
-        // Redirect to pet list after successful update
         res.redirect('/pets');
     } catch (err) {
         console.error(err);
